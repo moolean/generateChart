@@ -1,7 +1,7 @@
+## Init
+        pip install git+https://github.com/moolean/workTools.git
 
-pip install git+https://github.com/moolean/workTools.git
-
-unzip background.zip
+        unzip background.zip
 
 ## 如何开发新种类chart
 
@@ -11,25 +11,25 @@ unzip background.zip
 
         cp base_bar.py `chart_type`.py
 
-`初始化类时一定要使用规定的type名称`
-draw = bardrawer(chart_type = `chart_type`,  ...)
+    `初始化类时一定要使用规定的type名称`
+    draw = bardrawer(chart_type = `chart_type`,  ...)
 
 3. 生成图，生成100张图例
 
-    python base_bar.py
+        python base_bar.py
 
-生成图后会自动检查数据格式有无错误，打印以下信息说明无误
+    生成图后会自动检查数据格式有无错误，打印以下信息说明无误
 
-{'text_file': '', 'image_path': ''}
-check image success.
+    {'text_file': '', 'image_path': ''}
+    check image success.
 
 4. 将浏览文件交给管理验收
 
-    view_`chart_type`_time_usage.ipynb
+        view_`chart_type`_time_usage.ipynb
 
 5. 验收通过后上传git，一定要创建新分支在新分支上传
 
-    git checkout -b [your_brancn_name] 
-    git add `chart_type`.py
-    git commit -m "`chart_type`"
-    git push origin [your_brancn_name]
+        git checkout -b [your_brancn_name] 
+        git add `chart_type`.py
+        git commit -m "`chart_type`"
+        git push origin [your_brancn_name]
