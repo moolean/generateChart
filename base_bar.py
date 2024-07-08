@@ -214,7 +214,6 @@ class bardrawer(drawer):
                 return "error"
         #endregion ====== 画图 ======
 
-
         # 格式化最终输出，并保存  
         opt_text_md = getmd(colorNames, csv_file, percentFormat, bar_vertical)
         opt_text_nonumber = getlongcaption_bar(colorNames, csv_file, percentFormat, bar_vertical)
@@ -237,5 +236,5 @@ if __name__=="__main__":
                     x_data_sign_options = ["+"],
                     pie_autotext_type_options=["original_data", "percentage"],)
     
-    draw(num = 100, num_workers = 20, )
+    draw(num = 100, num_workers = 20,)
     

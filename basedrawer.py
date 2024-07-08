@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import time
@@ -283,23 +284,33 @@ class drawer(ABC):
             csv_file : 数据
             result : 模型输出
         """
-        width = int(fig.get_dpi() * fig.get_figwidth())
-        height = int(fig.get_dpi() * fig.get_figheight())
+        # 随机缩放图像
+        buf = io.BytesIO()
+        fig.savefig(buf, format='jpg')
+        buf.seek(0)
+        img = Image.open(buf)
+        
+        # 选择一个随机的缩放因子
+        scale_factor = random.uniform(0.3, 1.2)
+        original_size = img.size  # (width, height)
+        new_size = (int(original_size[0] * scale_factor), int(original_size[1] * scale_factor))
+        resized_img = img.resize(new_size, Image.Resampling.NEAREST)
+
         prompt = random.choice(sensetool.getprompt(prompt_path))
 
         result = {
             "image": f"images/{self.chart_type}_{cnt}.jpg",
-            "height": height,
-            "width": width,
+            "height": new_size[1],
+            "width": new_size[0],
             "conversations":[{"from": "human", "value": f"<image>\n{prompt}"}, 
                         {"from": "gpt", "value": f"{result}"}],
             }
-        
 
         image_save_path = os.path.join(self.data_root, f"images/{self.chart_type}_{cnt}.jpg")
-        plt.savefig(image_save_path)
+        resized_img.save(image_save_path)
+        buf.close()
         plt.close()
-
+        
         json_save_path = os.path.join(self.data_root, f"jsons/{self.chart_type}_{cnt}.json")
         with open(json_save_path, "w") as f:
             json.dump(result, f, ensure_ascii=False)
