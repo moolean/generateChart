@@ -264,7 +264,7 @@ class drawer(ABC):
 
         fulljson = os.path.join(os.getcwd(), optJsonlName)
         fullimage = os.path.join(os.getcwd(), self.data_root)
-        sensetool.startView(fulljson, fullimage)
+        sensetool.startView(fulljson, fullimage, self.data_root)
 
         pathOverView = {"root": fullimage,
                         "annotation": fulljson,

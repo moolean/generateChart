@@ -12,7 +12,7 @@ from PIL import Image
 import numpy as np
 import sensetool
 import matplotlib.ticker as mticker
-from optformat import *
+from labelformats.base_bar import *
 from datagenerater import *
 import logging
 import matplotlib.image as mpimg
@@ -40,6 +40,7 @@ class bardrawer(drawer):
 
     # @timer_decorator
     def datagenerater(self, *args, **kwargs):
+        # 如需修改数据格式参考原代码datagenerater.py，新代码写在此处
         return generate_multigroup_1d_data(*args, **kwargs)
     
     # @timer_decorator
@@ -142,7 +143,6 @@ class bardrawer(drawer):
                     linestyle=linestyle, alpha=alpha, label=legend_list[i]
                     )
 
-
             weight = random.choice(self.weights)
             stretch = random.choice(self.stretchs)
             size = random.choice(self.sizes)
@@ -215,7 +215,7 @@ class bardrawer(drawer):
         #endregion ====== 画图 ======
 
         # 格式化最终输出，并保存  
-        opt_text_md = getmd(colorNames, csv_file, percentFormat, bar_vertical)
+        opt_text_md = getmd_bar(colorNames, csv_file, percentFormat, bar_vertical)
         opt_text_nonumber = getlongcaption_bar(colorNames, csv_file, percentFormat, bar_vertical)
 
         if self.usage == "md":

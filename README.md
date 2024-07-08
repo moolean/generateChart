@@ -7,7 +7,9 @@
 
 1. 使用规定的文件名(具体名字询问管理)：`chart_type`
 
-2. 参考base_bar.py代码，修改chartdrawer函数内容，如默认生成的数据无法使用则修改datagenerater函数
+2. 参考base_bar.py代码，修改chartdrawer函数内容，如默认生成的数据无法使用则修改datagenerater函数（**修改代码一定不能在原代码上修改，只能改自己新建的文件**）
+
+    
 
         cp base_bar.py `chart_type`.py
 
