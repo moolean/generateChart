@@ -25,7 +25,6 @@ class ChartConfig:
     need_data_label_options: list = True
     pie_autotext_type_options: list = None
 
-
     seed: int = None
 
 

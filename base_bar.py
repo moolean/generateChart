@@ -224,17 +224,19 @@ class bardrawer(drawer):
             result = opt_text_nonumber
         self.savefiles(fig, cnt,"prompts/markdown_prompt.txt", csv_file, result)
 
-        # print(opt_text_md)
+        # print(result)
         
 
 if __name__=="__main__":
 
-    draw = bardrawer(chart_type = "base_bar",
-                    usage = "md",
-                    xticklabel_num_range = [5, 20],
-                    data_group_num_range = [1, 5],
-                    x_data_sign_options = ["+"],
-                    pie_autotext_type_options=["original_data", "percentage"],)
+    draw = bardrawer(chart_type = "base_bar", # 一定要使用规定的type名称
+                    usage = "md", # 设置合成label的类别，md的输出为markdown格式
+                    xticklabel_num_range = [5, 20], # 类别的随机范围，图合成时在5-20个类别中随机
+                    data_group_num_range = [1, 5], # 图例的随机范围
+                    x_data_sign_options = ["+"], # 
+                    pie_autotext_type_options=["original_data", "percentage"],
+                    )
     
+    # 生成图，num为生成数量，num_workers为并行进程数
     draw(num = 100, num_workers = 20,)
     
