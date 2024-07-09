@@ -29,6 +29,7 @@ from abc import ABC, abstractmethod
 import sensetool
 import functools
 
+
 # logging.basicConfig(
 #     level=logging.INFO,
 #     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s - [Process: %(process)d]"
@@ -51,7 +52,8 @@ class drawer(ABC):
                 xticklabel_num_range = [5, 20],
                 data_group_num_range = [1, 5],
                 x_data_sign_options = ["+"],
-                pie_autotext_type_options=["original_data", "percentage"]):
+                pie_autotext_type_options = ["original_data", "percentage"],
+                client = None):
         """初始化
 
         Args:
@@ -102,6 +104,8 @@ class drawer(ABC):
         #     Image.open(fp)
             self.background_imgs.append(fp)
 
+        
+        self.checker = sensetool.checker(client)
         sensetool.print_divider("Init")
 
     def __call__(self, *args, **kwargs):
@@ -272,7 +276,8 @@ class drawer(ABC):
                         "repeat_time": 1,
                         "length": num}
         
-        sensetool.checkfiles(pathOverView)
+        
+        self.checker.checkfiles(pathOverView)
 
     def savefiles(self, fig, cnt, prompt_path, csv_file, result):
         """保存文件

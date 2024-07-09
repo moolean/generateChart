@@ -12,7 +12,7 @@ from PIL import Image
 import numpy as np
 import sensetool
 import matplotlib.ticker as mticker
-from labelformats.base_bar import *
+from labelformats.base_bar_opt import *
 from datagenerater import *
 import logging
 import matplotlib.image as mpimg
@@ -214,15 +214,15 @@ class bardrawer(drawer):
                 return "error"
         #endregion ====== 画图 ======
 
-        # 格式化最终输出，并保存  
-        opt_text_md = getmd_bar(colorNames, csv_file, percentFormat, bar_vertical)
-        opt_text_nonumber = getlongcaption_bar(colorNames, csv_file, percentFormat, bar_vertical)
+        # 格式化最终输出，并保存  (每个种类的图格式不一，需要自行更改，**写在此处或新建文件不要更改原代码**)
+        opt_text_md = getmd(colorNames, csv_file, percentFormat, bar_vertical)
+        opt_text_nonumber = getlongcaption_v2(colorNames, csv_file, percentFormat, bar_vertical)
 
         if self.usage == "md":
             result = opt_text_md
         elif self.usage == "nonumber":
             result = opt_text_nonumber
-        self.savefiles(fig, cnt,"prompts/markdown_prompt.txt", csv_file, result)
+        self.savefiles(fig, cnt,"prompts/longcap_prompt.txt", csv_file, result)
 
         # print(result)
         
@@ -230,7 +230,7 @@ class bardrawer(drawer):
 if __name__=="__main__":
 
     draw = bardrawer(chart_type = "base_bar", # 一定要使用规定的type名称
-                    usage = "md", # 设置合成label的类别，md的输出为markdown格式
+                    usage = "nonumber", # 设置合成label的类别，md的输出为markdown格式
                     xticklabel_num_range = [5, 20], # 类别的随机范围，图合成时在5-20个类别中随机
                     data_group_num_range = [1, 5], # 图例的随机范围
                     x_data_sign_options = ["+"], # 
@@ -238,5 +238,5 @@ if __name__=="__main__":
                     )
     
     # 生成图，num为生成数量，num_workers为并行进程数
-    draw(num = 100, num_workers = 20,)
+    draw(num = 100, num_workers = 20)
     

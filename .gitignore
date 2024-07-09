@@ -1,4 +1,4 @@
 /opt/
 /view_*
-/__pycache__/
+**/__pycache__/
 /background/
