@@ -295,6 +295,8 @@ def getmd(colorNames, csv_file, percentFormat=None, bar_vertical=True, ):
     if not bar_vertical:
         # 如果是纵排表，按行反转 DataFrame
         csv_file = csv_file.iloc[::-1].reset_index(drop=True)
+    else:
+        csv_file = csv_file.iloc[:, 0:1].join(csv_file.iloc[:, -1:0:-1].reset_index(drop=True))
     md = csv_file.to_markdown(index=False)
 
     for i in colorNames:
