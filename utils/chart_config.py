@@ -23,7 +23,6 @@ class ChartConfig:
     fx_options: list = None
 
     need_data_label_options: list = True
-    pie_autotext_type_options: list = None
 
     seed: int = None
 
@@ -39,9 +38,6 @@ class ChartConfig:
         x_data_sign = random.choice(self.x_data_sign_options)
         need_data_label = True
 
-        pie_autotext_type = None
-        # if need_data_label and any(_ in self.chart_type for _ in ["pie", "ring"]):
-        #     pie_autotext_type = random.choice(self.pie_autotext_type_options)
 
         
         """
@@ -103,7 +99,6 @@ class ChartConfig:
             data_group_num=data_group_num,
 
             need_data_label=need_data_label,     # 是否需要每一个数据点的标签
-            pie_autotext_type=pie_autotext_type, # 饼图显示的是百分比还是原始数据
 
             generate_fx_data=generate_fx_data,
             fx=fx,                               # xy之间的函数关系

@@ -3,7 +3,7 @@ import warnings
 from matplotlib import pyplot as plt
 import numpy as np
 from basedrawer import drawer, timer_decorator
-import utils
+import utils.utils as utils
 import os
 import random
 import warnings
@@ -13,10 +13,9 @@ import numpy as np
 import sensetool
 import matplotlib.ticker as mticker
 from labelformats.base_bar_opt import *
-from datagenerater import *
+from utils.datagenerater import *
 import logging
 import matplotlib.image as mpimg
-
 
 # logging.basicConfig(
 #     level=logging.INFO,
@@ -65,6 +64,8 @@ class bardrawer(drawer):
         | xticklabel_list[0]                | data[0][0]     | ...... | ......                                   |
         | ......                            | ......         | ...... | ......                                   |
         | xticklabel_list[xticklabel_num-1] | ......         | ...... | data[data_group_num-1][xticklabel_num-1] |
+
+        datatype 为数据的范围或格式，在datagenerater中定义，保持数据生成格式和展示格式的同步
         """
         # 设置字体
         utils.set_font() 
@@ -235,8 +236,7 @@ if __name__=="__main__":
                     usage = "nonumber", # 设置合成label的类别，md的输出为markdown格式
                     xticklabel_num_range = [5, 20], # 类别的随机范围，图合成时在5-20个类别中随机
                     data_group_num_range = [1, 5], # 图例的随机范围
-                    x_data_sign_options = ["+"], # 
-                    pie_autotext_type_options=["original_data", "percentage"],
+                    x_data_sign_options = ["+"], # 生成数据的正负，( + | - | mixed )
                     )
     
     # 生成图，num为生成数量，num_workers为并行进程数

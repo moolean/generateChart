@@ -16,14 +16,9 @@ import random
 from datetime import datetime
 import warnings
 from matplotlib.font_manager import FontProperties
-from chart_config import ChartConfig
+from utils.chart_config import ChartConfig
 import copy
-import random
 import math
-import numpy as np
-import pandas as pd
-import jieba
-import os
 import matplotlib.image as mpimg
 from abc import ABC, abstractmethod
 import sensetool
@@ -52,7 +47,6 @@ class drawer(ABC):
                 xticklabel_num_range = [5, 20],
                 data_group_num_range = [1, 5],
                 x_data_sign_options = ["+"],
-                pie_autotext_type_options = ["original_data", "percentage"],
                 client = None):
         """初始化
 

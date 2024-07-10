@@ -22,7 +22,6 @@ def generate_random_numbers(total_count, decimal_places, x_data_sign, range_min 
             numbers.append(next_num)
     
     if x_data_sign == "+":
-
         return [round_number(abs(num), decimal_places) for num in numbers] 
     elif x_data_sign == "-":
         return [round_number(-abs(num), decimal_places) for num in numbers]
@@ -68,7 +67,7 @@ def generate_multigroup_1d_data(config_dict, chart_data, csv_file):
         )
         csv_file[chart_data["legend_list"][i]] = chart_data["data"][i]
     if chart_data["data_type"] == "percentage_sum1":
-        #修改数据为百分比格式，同一xticker数据之和为1，用2位小数表示
+        # 修改数据为百分比格式，同一xticker数据之和为1，用2位小数表示
         for i in range(len(chart_data["data"][0])):
             total = 0
             for j in range(len(chart_data["data"])):
