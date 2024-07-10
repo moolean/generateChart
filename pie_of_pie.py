@@ -46,7 +46,7 @@ class bardrawer(drawer):
         # return generate_multigroup_1d_data(*args, **kwargs)
         return generate_barofpie_1d_data(*args, **kwargs)
         # return generate_singlegroup_1d_data(*args, **kwargs)
-
+    
     # @timer_decorator
     def chartdrawer(self, input_dict):
 
@@ -96,7 +96,7 @@ class bardrawer(drawer):
 
         # make figure and assign axis objects
         # fig_width = 5 + len(xticklabel_list) * 0.3 + len(data)*2
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(np.random.uniform(9, 16), np.random.uniform(4, 9)), dpi=random.choice(range(240, 360)))
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(np.random.uniform(7, 14), np.random.uniform(5, 10)), dpi=random.choice(range(240, 360)))
         fig.subplots_adjust(wspace=0)
 
         # pie chart parameters
@@ -107,79 +107,61 @@ class bardrawer(drawer):
         explode[0] = 0.1
         # rotate so that first wedge is split by the x-axis
         angle = -180 * overall_ratios[0]
-        colors, colorNames = utils.get_diff_color(len(overall_ratios))
-        wedges, texts, autotexts = ax1.pie(overall_ratios, autopct='%1.1f%%', startangle=angle,
+        colors, colorNames = get_non_black_colors(len(overall_ratios))
+        wedges, *_ = ax1.pie(overall_ratios, autopct='%1.1f%%', startangle=angle,
                             labels=xticklabel_list, explode=explode, colors=colors)
-        
-        # # 设置标签属性
-        # for text in texts + autotexts:
-        #     text.set_fontsize(12)
-        #     text.set_bbox(dict(facecolor='white', alpha=0.8, edgecolor='none'))
-
-        # # 调整标签位置
-        # adjust_text(texts + autotexts, arrowprops=dict(arrowstyle="-", color='gray', lw=0.5))
-
-        # bar chart parameters
-        # age_ratios = [.33, .54, .07, .06]
-        # age_labels = ['Under 35', '35-49', '50-65', 'Over 65']
-        age_ratios = []
-        age_labels = legend_list[1:]
-        for bar_i in range(len(age_labels)):
-            age_ratios.append(data[bar_i+1][0])
-        
-        bottom = 1
-        # width = .2
-        width = random.choice(range(1,3))
 
         needLabel = random.random()
+        # small pie chart parameters
+        ratios = []
+        labels = legend_list[1:]
+        for bar_i in range(len(labels)):
+            ratios.append(data[bar_i+1][0])
+        width = random.choice(range(1,3))
+        colors1, colorNames1 = get_non_black_colors(len(ratios))
+        if needLabel > 0.3:
+            wedges2, texts, autotexts = ax2.pie(ratios, autopct='%1.1f%%', startangle=angle,
+                labels=labels, radius=0.5, textprops={'size': 'smaller'}, colors=colors1)
+        else:
+            wedges2, texts, autotexts = ax2.pie(ratios, autopct='%1.1f%%', startangle=angle,
+                 radius=0.5, textprops={'size': 'smaller'}, colors=colors1)
 
-        # Adding from the top matches the legend.
-        for j, (height, label) in enumerate(reversed([*zip(age_ratios, age_labels)])):
-            bottom -= height
-            bc = ax2.bar(0, height, width, bottom=bottom, color=color, label=label,
-                        alpha=min(0.1 + 0.25 * j, 1.0))
-            ax2.bar_label(bc, labels=[f"{height:.1%}"], label_type='center')
-            # ax2.bar_label(bc, labels=[f"{label}"], label_type='edge')
-            
-            # 使用annotate函数添加文字标签
-            if needLabel > 0.3:
-                for rect in bc:
-                    height = rect.get_height()
-                    ax2.annotate(
-                        label,  # 标签文本
-                        xy=(rect.get_x() + rect.get_width(), rect.get_y() + height / 2),  # 标签的位置
-                        xytext=(5, 0),  # 偏移位置
-                        textcoords="offset points",  # 使用偏移位置
-                        ha='left', va='center',  # 水平对齐和垂直对齐
-                        fontsize=10, color='black'
-                    )
-
-        ax2.set_title(xticklabel_list[0])
+        # ax2.set_title(xticklabel_list[0])
         if needLabel < 0.7:
-            ax2.legend()
-        ax2.axis('off')
-        ax2.set_xlim(- 2.5 * width, 2.5 * width)
+            ax2.legend(wedges2, labels, loc='center left', bbox_to_anchor=(1, 0.5), fontsize='small')
+        # ax2.legend()
 
+        # max_coords,min_coords = findCoords(pie)
+        # Compute the center and radius of the second pie chart
+        center = (0, 0)
+        radius = 0.5
+
+        # Highest point (top) at angle 90 degrees
+        top_x, top_y = center[0], center[1] + radius
+
+        # Lowest point (bottom) at angle 270 degrees
+        bottom_x, bottom_y = center[0], center[1] - radius
+        
         # use ConnectionPatch to draw lines between the two plots
-        theta1, theta2 = wedges[0].theta1, wedges[0].theta2
-        center, r = wedges[0].center, wedges[0].r
-        bar_height = sum(age_ratios)
+        # get the wedge data
+        theta1, theta2 = ax1.patches[0].theta1, ax1.patches[0].theta2
+        center, r = ax1.patches[0].center, ax1.patches[0].r
 
         # draw top connecting line
         x = r * np.cos(np.pi / 180 * theta2) + center[0]
-        y = r * np.sin(np.pi / 180 * theta2) + center[1]
-        con = ConnectionPatch(xyA=(-width / 2, bar_height), coordsA=ax2.transData,
-                            xyB=(x, y), coordsB=ax1.transData)
+        y = np.sin(np.pi / 180 * theta2) + center[1]
+        con = ConnectionPatch(xyA=(top_x,top_y), xyB=(x, y),
+                            coordsA="data", coordsB="data", axesA=ax2, axesB=ax1)
         con.set_color([0, 0, 0])
-        linewidth = np.random.uniform(1, 5)
+        linewidth = np.random.uniform(0.5, 3)
         con.set_linewidth(linewidth)
         ax2.add_artist(con)
 
         # draw bottom connecting line
         x = r * np.cos(np.pi / 180 * theta1) + center[0]
-        y = r * np.sin(np.pi / 180 * theta1) + center[1]
-        con = ConnectionPatch(xyA=(-width / 2, 0), coordsA=ax2.transData,
-                            xyB=(x, y), coordsB=ax1.transData)
+        y = np.sin(np.pi / 180 * theta1) + center[1]
+        con = ConnectionPatch(xyA=(bottom_x,bottom_y), xyB=(x, y), coordsA="data",
+                            coordsB="data", axesA=ax2, axesB=ax1)
         con.set_color([0, 0, 0])
         ax2.add_artist(con)
         con.set_linewidth(linewidth)
@@ -209,7 +191,7 @@ class bardrawer(drawer):
         #endregion ====== 画图 ======
 
         # 格式化最终输出，并保存  
-        opt_text_md = getmd_bar(colorNames, csv_file, xticklabel_list, legend_list)
+        opt_text_md = getmd_bar(colorNames, colorNames1, csv_file, xticklabel_list, legend_list)
         # opt_text_nonumber = getlongcaption_bar(colorNames, csv_file, percentFormat, bar_vertical)
 
         if self.usage == "md":
@@ -220,12 +202,13 @@ class bardrawer(drawer):
 
         # print(result)
 
-def getmd_bar(colorNames, csv_file, xticklabel_list, legend_list):
-    opt_text_md = f"这是一张扇形图和柱状图的组合，共有{len(colorNames)}组数据，"
+def getmd_bar(colorNames, colorNames1, csv_file, xticklabel_list, legend_list):
+    opt_text_md = f"这是两张扇形图的组合，大扇形图共有{len(colorNames)}组数据，"
     csv_file = csv_file.map(modify_value)
     pie = csv_file.iloc[:, :2]
     bar = csv_file.loc[:0,:].iloc[:, 2:]
-    bar = pd.melt(bar,var_name='类别',value_name='百分比').iloc[::-1]
+    # bar = pd.melt(bar,var_name='类别',value_name='百分比').iloc[::-1]
+    bar = pd.melt(bar,var_name='类别',value_name='百分比')
     pie.columns = ['类别', '百分比']
     md_pie = pie.to_markdown(index=False)
     md_bar = bar.to_markdown(index=False)
@@ -234,7 +217,9 @@ def getmd_bar(colorNames, csv_file, xticklabel_list, legend_list):
     for i in colorNames:
         opt_text_md += f"其中{i[0]}代表{xticklabel_list[i[1]]}，"
     opt_text_md += f"该图对应的markdown格式如下：\n```markdown\n{md_pie}\n```"
-    opt_text_md += f"\n\n柱状图表示的是扇形图{xticklabel_list[0]}区域的细分，"
+    opt_text_md += f"\n\n小扇形图表示的是大扇形图{xticklabel_list[0]}区域的细分，共有{len(colorNames1)}组数据，"
+    for i in colorNames1:
+        opt_text_md += f"其中{i[0]}代表{legend_list[i[1]+1]}，"
     opt_text_md += f"该图对应的markdown格式如下：\n```markdown\n{md_bar}\n```"
     return opt_text_md
 
@@ -244,17 +229,17 @@ def modify_value(x):
             return '{:.1%}'.format(x)
         else:
             return x
-
+        
 def get_non_black_colors(n):
     while True:
         colors, colorNames = utils.get_diff_color(n)
         colors_rgba = [to_rgba(c) for c in colors]
         if not any(np.all(np.isclose(c, [0, 0, 0, 1])) for c in colors_rgba):
             return colors, colorNames
-            
+
 def generate_barofpie_1d_data(config_dict, chart_data, csv_file):
     """
-    扇形图，柱状图:
+    扇形图，扇形图:
     | legend_title                      | legend_list[0] | ...... | legend_list[data_group_num-1]            |
     | --------------------------------- | -------------- | ------ | ---------------------------------------- |
     | xticklabel_list[0]                | data[0][0]     | ...... | data[data_group_num-1][0]                |
@@ -325,17 +310,35 @@ def generate_barofpie_1d_data(config_dict, chart_data, csv_file):
             csv_file.loc[0, chart_data["legend_list"][j]] = chart_data["data"][j][0]
 
     csv_file.columns = [col_name if col_name != "" else '' for col_name in csv_file.columns]
+
+# # Function to calculate coordinates of a point on the circle
+# def polar_to_cartesian(center, r, theta):
+#     x = center[0] + r * np.cos(np.radians(theta))
+#     y = center[1] + r * np.sin(np.radians(theta))
+#     return x, y
         
+# def findCoords(pie):
+#     # Compute the center and radius of the second pie chart
+#     center = (0, 0)
+#     radius = 0.5
+
+#     # Highest point (top) at angle 90 degrees
+#     top_x, top_y = center[0], center[1] + radius
+
+#     # Lowest point (bottom) at angle 270 degrees
+#     bottom_x, bottom_y = center[0], center[1] - radius
+#     return max_coords,min_coords
+
 
 if __name__=="__main__":
 
-    draw = bardrawer(chart_type = "bar_of_pie", # 一定要使用规定的type名称
+    draw = bardrawer(chart_type = "pie_of_pie", # 一定要使用规定的type名称
                     usage = "md", # 设置合成label的类别，md的输出为markdown格式
                     xticklabel_num_range = [2, 7], # 类别的随机范围，图合成时在5-20个类别中随机
-                    data_group_num_range = [3, 6], # 图例的随机范围
-                    x_data_sign_options = ["+"], 
+                    data_group_num_range = [3, 5], # 图例的随机范围
+                    x_data_sign_options = ["+"], # 
                     )
     
     # 生成图，num为生成数量，num_workers为并行进程数
-    draw(num = 100, num_workers = 5,)
+    draw(num = 30, num_workers = 5,)
     
