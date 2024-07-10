@@ -240,5 +240,5 @@ if __name__=="__main__":
                     )
     
     # 生成图，num为生成数量，num_workers为并行进程数
-    draw(num = 100, num_workers = 20)
+    draw(num = 100000, num_workers = 50)
     

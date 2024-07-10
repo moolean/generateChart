@@ -35,9 +35,16 @@
 
         view_`chart_type`_time_usage.ipynb
 
-b. 验收通过后上传git，一定要创建新分支在新分支上传
+6. 验收通过后上传git，fork到自己库，改好后提交merge
 
-        git checkout -b [your_brancn_name] 
-        git add `chart_type`.py
-        git commit -m "`chart_type`"
-        git push origin [your_brancn_name]
+## 完成的图表
+
+- base_bar
+- base_line
+- bar_line
+- combine_bar
+- stacked_bar
+- base_pie
+- base_ring
+- bar_of_pie
+- pie_of_pie
