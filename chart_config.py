@@ -40,8 +40,8 @@ class ChartConfig:
         need_data_label = True
 
         pie_autotext_type = None
-        if need_data_label and any(_ in self.chart_type for _ in ["pie", "ring"]):
-            pie_autotext_type = random.choice(self.pie_autotext_type_options)
+        # if need_data_label and any(_ in self.chart_type for _ in ["pie", "ring"]):
+        #     pie_autotext_type = random.choice(self.pie_autotext_type_options)
 
         
         """

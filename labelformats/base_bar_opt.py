@@ -287,7 +287,7 @@ def modify_value(x):
     else:
         return x
     
-def getmd(colorNames, csv_file, percentFormat=None, bar_vertical=True, ):
+def getmd(colorNames, csv_file, percentFormat=None, bar_vertical=True, reverse_colume=False, ):
     opt_text_md = f"这是一张柱状图，共有{len(colorNames)}组数据，"
     if percentFormat:
         csv_file = csv_file.applymap(modify_value)
@@ -295,7 +295,7 @@ def getmd(colorNames, csv_file, percentFormat=None, bar_vertical=True, ):
     if not bar_vertical:
         # 如果是纵排表，按行反转 DataFrame
         csv_file = csv_file.iloc[::-1].reset_index(drop=True)
-    else:
+    if reverse_colume:
         csv_file = csv_file.iloc[:, 0:1].join(csv_file.iloc[:, -1:0:-1].reset_index(drop=True))
     md = csv_file.to_markdown(index=False)
 
@@ -305,7 +305,7 @@ def getmd(colorNames, csv_file, percentFormat=None, bar_vertical=True, ):
 
     return opt_text_md
 
-def getlongcaption(colorNames, csv_file, percentFormat=None, bar_vertical=True, ):
+def getlongcaption(colorNames, csv_file, percentFormat=None, bar_vertical=True, *args, **kwargs):
 
     opt_text_lc = f"这是一张柱状图，共有{len(colorNames)}组数据，"
     datarange = [round_to_nearest_down(csv_file.iloc[:, 1:].min().min()), round_to_nearest_up(csv_file.iloc[:, 1:].max().max())]

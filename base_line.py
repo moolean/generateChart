@@ -16,7 +16,7 @@ from labelformats.base_bar_opt import *
 from datagenerater import *
 import logging
 import matplotlib.image as mpimg
-
+from adjustText import adjust_text
 
 # logging.basicConfig(
 #     level=logging.INFO,
@@ -58,144 +58,119 @@ class bardrawer(drawer):
             chart_data['x_unit'], chart_data['y_unit'], chart_data['xticklabel_list'],
             chart_data['legend_list'], chart_data['data'], chart_data["data_type"]
         )
+        
 
         utils.set_font()
 
-        hatchs =['/', '\\', '|', '-', '+', 'x', 'o', 'O', '.', '*']
-        linestyles = ['-', '--', '-.', ':', '']
-        linewidths = list(range(1, 6))
-        # cmap = matplotlib.colormaps['viridis']
+        # 画图
+        markers = ['.', 'o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'X']
+        fillstyles = ['full']
+        # cmap = mpl.colormaps['viridis']
         # colors = [cmap(i) for i in range(cmap.N)]
         colors, colorNames = utils.get_diff_color(len(data))
-        alphas =  [num / 10 for num in range(5, 11)]
-        units = ["", "", "", "", "", "", "", "", "", ""]
-        unit = random.choice(units)
+        alphas = [num / 10 for num in range(7, 11)]
+        linestyles = ['-', '--', '-.', ':']
+        linewidths = list(range(1, 3))
+
+        # 各种字体的格式
+        # vert_types = ["center", "top", "bottom", "baseline", "center_baseline"]
+        # hori_types = ["center", "right", "left"]
         weights = ['ultralight', 'light', 'normal', 'regular', 'book', 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black']
-        sizes = ['small', 'medium', 'large']
+        sizes = range(8, 12, 1)
         styles = ["normal", "italic", "oblique"]
         variants = ["normal", "small-caps"]
         stretchs = ['ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed', 'normal', 'semi-expanded', 'expanded', 'extra-expanded', 'ultra-expanded']
-        bar_vertical = random.choice([1,0])
-        barWidth = 0.3
+        units = ["", "", "", "", "", "", "", "", "", ""]
         # 设置是否用百分比显示数据
-        if datatype in ["percentage","percentage_sum1"] and random.random() < 0.5:
+        if datatype=="percentage" and random.random() < 0.5:
             percentFormat = True
         else:
             percentFormat = False
         # 根据xticklabel_list数量控制图长度
-        fig_width = 5 + len(xticklabel_list) * 0.5
-        fig_height = 6 + len(data) * 0.5
-        if bar_vertical:
-            fig = plt.figure(figsize=(fig_width, fig_height), dpi=random.choice(range(240, 360)))
-        else:
-            
-            fig = plt.figure(figsize=(fig_height, fig_width), dpi=random.choice(range(240, 360)))
+        fig_width = 5 + len(xticklabel_list) * 0.3
+        fig = plt.figure(figsize=(fig_width, np.random.uniform(4, 6)), dpi=random.choice(range(240, 360)))
+        unit = random.choice(units)
         title_text = plt.title(chart_title)
-
-        y_text = []
-    
-        r1 = np.arange(len(xticklabel_list))
-
-        if bar_vertical:
-            plt.xticks(r1, xticklabel_list)
+        if unit:
+            y_label += f"(单位：{unit})"
+        y_label_text = plt.ylabel(y_label)
+        y_list = []
         
-            # 随机设置xticker倾斜度
-            if random.random() < 0.1 or len(xticklabel_list) > 8:
-                plt.xticks(rotation = random.choice([num for num in range(40, 70)]))
-            plt.yticks([])
-        else:
-            plt.yticks(r1, xticklabel_list)
-            plt.xticks([])
+        height_range = max(max(group_data) for group_data in data) - min(min(group_data) for group_data in data)
+        text_offset = height_range * 0.02  # 偏移量为权重范围的2%
         
-        bottom_data = []
-        bars = []
+        # 分别画每一组数据
         for i, y_data in enumerate(data):
-            offset = (i - (len(data) - 1) / 2) * barWidth  # 计算偏移量
             
-            linewidth = random.choice(linewidths)
+            marker = random.choice(markers)
+            fillstyle = random.choice(fillstyles)
             color = colors[i]
+            # colorNames.append([utils.rgba_to_ch(color), legend_list[i]])
             colorNames[i][1] = legend_list[i]
-            if random.random() < 0.1:
-                hatch = random.choice(hatchs)
-            else:
-                hatch = None
-            linestyle = random.choice(linestyles)
             alpha = random.choice(alphas)
-        
-            if not bottom_data:
-                bottom_data = [0 for _ in range(len(xticklabel_list))]
-            else:
-                bottom_data = [x + max(data[i-1])*1.2 for x in bottom_data]
-            if bar_vertical:
-                # 正常水平画表
-                bars.append(plt.bar(
-                    r1, y_data, 
-                    bottom=bottom_data,
-                    width=barWidth, 
-                    hatch=hatch, 
-                    color=color, 
-                    linewidth=linewidth,
-                    linestyle=linestyle, alpha=alpha, label=legend_list[i]
-                    ))
-            else:
-                # y_data = list(reversed(y_data))
-                # 纵向画表
-                bars.append(plt.barh(
-                    r1, y_data, 
-                    left=bottom_data,
-                    height=barWidth, 
-                    hatch=hatch, 
-                    color=color, 
-                    linewidth=linewidth,
-                    linestyle=linestyle, alpha=alpha, label=legend_list[i]
-                    ))
+            linestyle = random.choice(linestyles)
+            linewidth = random.choice(linewidths)
 
+            plt.plot(xticklabel_list, y_data, marker=marker, fillstyle=fillstyle, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth, label=legend_list[i])
+            color = random.choice(colors)
 
+            # ha = random.choice(hori_types)
+            # va = random.choice(vert_types)
             weight = random.choice(weights)
             stretch = random.choice(stretchs)
             size = random.choice(sizes)
             style = random.choice(styles)
             variant = random.choice(variants)
-            color = random.choice(colors)
-    
-            
-            for index, position in enumerate(bottom_data):
-                position = position + y_data[index]
+
+            for i, value in enumerate(y_data):
                 if not percentFormat:
-                    format = f"{y_data[index]} {unit}"
+                    format = str(value)+unit
                 else:
-                    format = '{:.0%}'.format(y_data[index])
-                
-                if bar_vertical:
-                    tmp = plt.text(index, position, format, 
-                            ha='center', va='bottom',
-                            weight=weight, stretch=stretch, size=size, style=style, variant=variant
-                            )
-                else:
-                    tmp = plt.text(position, index, format, 
-                        ha='left', va='center',
-                        weight=weight, stretch=stretch, size=size, style=style, variant=variant
-                        )
-                y_text.append(tmp)
+                    format = '{:.0%}'.format(value)
+                text = plt.text(
+                    xticklabel_list[i], value + text_offset, format,
+                    ha='center', va='bottom',
+                    color=color,
+                    weight=weight, stretch=stretch, size=size, style=style, variant=variant
+                )
+                text.set_path_effects([]) # 避免plt.xkcd()的影响
+                y_list.append(text)
+            # 随机设置xticker倾斜度
+            try:
+                if random.random() < 0.1 or len(xticklabel_list)>12:
+                    plt.xticks(rotation = random.choice([num for num in range(40, 70)]))
+            except:
+                print("11111")
+            # 随机隐藏y轴
+            if random.random() < 0.1:
+                plt.yticks([])
 
-        r2 = []
-        last = 0
-        for i in range(len(data)):
-            h = last + max(data[i])*1.2/2
-            last += max(data[i])
-            r2.append(h)
-        if bar_vertical:
-            plt.yticks(r2, legend_list)
-        else:
-            plt.xticks(r2, legend_list)
-
+        locs = [1, 2, 3, 4]
+        loc = random.choice(locs)
+        legend = plt.legend(title=legend_title, loc=loc, bbox_to_anchor=(1, 0, 0.3, 1))
+        
         ax = plt.gca()
-        # x轴
-        # 去掉上面和右边的表框   
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.spines['bottom'].set_visible(False)
-        ax.spines['left'].set_visible(False)
+        # 随机将横轴放在0的位置
+        if random.random() < 0.4:
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.axhline(y=0, color='black', linewidth=0.8)
+            # 设置 x 轴的刻度标签在横轴附近
+            ax.xaxis.set_ticks_position('bottom')
+
+            # 调整 x 轴标签的位置
+            ax.spines['bottom'].set_position(('data', 0))
+
+        # 随机去掉上面和右边的表框   
+        if random.randint(0, 1): 
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+        # log数据设置对应刻度
+        if datatype == "log":
+            ax.set_yscale('symlog')
+        # 百分比数据设置对应刻度
+        if percentFormat:
+            ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1))
 
         with warnings.catch_warnings(record=True) as warning_list:
             plt.tight_layout()
@@ -209,7 +184,6 @@ class bardrawer(drawer):
         bg_img = mpimg.imread(bg_img_path)
         new_ax.imshow(bg_img, alpha=random.uniform(0.1, 0.2), aspect='auto')
         new_ax.axis('off')
-
         with warnings.catch_warnings(record=True) as warning_list:
             plt.draw()
             if warning_list:
@@ -217,16 +191,13 @@ class bardrawer(drawer):
                     print(warning)
                 plt.close()
                 return "error"
+
         #endregion ====== 画图 ======
 
         # 格式化最终输出，并保存  (每个种类的图格式不一，需要自行更改，**写在此处或新建文件不要更改原代码**)
-        opt_text_md = getmd(colorNames, csv_file, percentFormat, bar_vertical, reverse_colume=bar_vertical)
-        opt_text_nonumber = getlongcaption_v2(colorNames, csv_file, percentFormat, bar_vertical)
+        result = getmd(colorNames, csv_file, percentFormat)
+        # opt_text_nonumber = getlongcaption_v2(colorNames, csv_file, percentFormat)
 
-        if self.usage == "md":
-            result = opt_text_md
-        elif self.usage == "nonumber":
-            result = opt_text_nonumber
         self.savefiles(fig, cnt,"prompts/longcap_prompt.txt", csv_file, result)
 
         # print(result)
@@ -234,7 +205,7 @@ class bardrawer(drawer):
 
 if __name__=="__main__":
 
-    draw = bardrawer(chart_type = "combine_bar", # 一定要使用规定的type名称
+    draw = bardrawer(chart_type = "base_line", # 一定要使用规定的type名称
                     usage = "md", # 设置合成label的类别，md的输出为markdown格式
                     xticklabel_num_range = [5, 20], # 类别的随机范围，图合成时在5-20个类别中随机
                     data_group_num_range = [1, 5], # 图例的随机范围
