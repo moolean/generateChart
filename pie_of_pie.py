@@ -96,8 +96,9 @@ class bardrawer(drawer):
 
         # make figure and assign axis objects
         # fig_width = 5 + len(xticklabel_list) * 0.3 + len(data)*2
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(np.random.uniform(7, 14), np.random.uniform(5, 10)), dpi=random.choice(range(240, 360)))
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(np.random.uniform(8, 11), np.random.uniform(5, 8)), dpi=random.choice(range(240, 360)))
         fig.subplots_adjust(wspace=0)
+        # fig.subplots_adjust(wspace=0.3)
 
         # pie chart parameters
         overall_ratios = data[0]
@@ -109,7 +110,7 @@ class bardrawer(drawer):
         angle = -180 * overall_ratios[0]
         colors, colorNames = get_non_black_colors(len(overall_ratios))
         wedges, *_ = ax1.pie(overall_ratios, autopct='%1.1f%%', startangle=angle,
-                            labels=xticklabel_list, explode=explode, colors=colors)
+                            labels=xticklabel_list, textprops={'size': 'medium'}, explode=explode, colors=colors)
 
         needLabel = random.random()
         # small pie chart parameters
@@ -117,39 +118,52 @@ class bardrawer(drawer):
         labels = legend_list[1:]
         for bar_i in range(len(labels)):
             ratios.append(data[bar_i+1][0])
-        width = random.choice(range(1,3))
         colors1, colorNames1 = get_non_black_colors(len(ratios))
         if needLabel > 0.3:
             wedges2, texts, autotexts = ax2.pie(ratios, autopct='%1.1f%%', startangle=angle,
-                labels=labels, radius=0.5, textprops={'size': 'smaller'}, colors=colors1)
+                labels=labels, radius=0.6, textprops={'size': 'medium'}, colors=colors1)
         else:
             wedges2, texts, autotexts = ax2.pie(ratios, autopct='%1.1f%%', startangle=angle,
-                 radius=0.5, textprops={'size': 'smaller'}, colors=colors1)
+                 radius=0.6, textprops={'size': 'medium'}, colors=colors1)
 
         # ax2.set_title(xticklabel_list[0])
         if needLabel < 0.7:
-            ax2.legend(wedges2, labels, loc='center left', bbox_to_anchor=(1, 0.5), fontsize='small')
+            if needLabel<0.2:
+                ax2.legend(wedges2, labels, loc='center left', bbox_to_anchor=(1, 0), fontsize='medium')
+            elif needLabel>0.4:
+                ax2.legend(wedges2, labels, loc='center left', bbox_to_anchor=(1, 1), fontsize='medium')
+            else:
+                ax2.legend(wedges2, labels, loc='center left', bbox_to_anchor=(1, 0.5), fontsize='medium')
         # ax2.legend()
 
         # max_coords,min_coords = findCoords(pie)
         # Compute the center and radius of the second pie chart
-        center = (0, 0)
-        radius = 0.5
+        # c = (0, 0)
+        # c = wedges2[0].center
+        # radius = 0.8
+        c, radius = wedges2[0].center, wedges2[0].r
 
         # Highest point (top) at angle 90 degrees
-        top_x, top_y = center[0], center[1] + radius
+        top_x, top_y = c[0], c[1] + radius
 
         # Lowest point (bottom) at angle 270 degrees
-        bottom_x, bottom_y = center[0], center[1] - radius
+        bottom_x, bottom_y = c[0], c[1] - radius
         
         # use ConnectionPatch to draw lines between the two plots
         # get the wedge data
         theta1, theta2 = ax1.patches[0].theta1, ax1.patches[0].theta2
+        # theta1, theta2 = wedges[0].theta1, wedges[0].theta2
         center, r = ax1.patches[0].center, ax1.patches[0].r
+        # center = ax1.patches[0].center
+        # center = wedges[0].center
+        # r = 1.3
+        # center, r = wedges[0].center, wedges[0].r
 
         # draw top connecting line
         x = r * np.cos(np.pi / 180 * theta2) + center[0]
         y = np.sin(np.pi / 180 * theta2) + center[1]
+        # print("x,y:",x,y)
+        # print("top_x,top_y:",top_x,top_y)
         con = ConnectionPatch(xyA=(top_x,top_y), xyB=(x, y),
                             coordsA="data", coordsB="data", axesA=ax2, axesB=ax1)
         con.set_color([0, 0, 0])
@@ -334,11 +348,11 @@ if __name__=="__main__":
 
     draw = bardrawer(chart_type = "pie_of_pie", # 一定要使用规定的type名称
                     usage = "md", # 设置合成label的类别，md的输出为markdown格式
-                    xticklabel_num_range = [2, 7], # 类别的随机范围，图合成时在5-20个类别中随机
+                    xticklabel_num_range = [3, 6], # 类别的随机范围，图合成时在5-20个类别中随机
                     data_group_num_range = [3, 5], # 图例的随机范围
                     x_data_sign_options = ["+"], # 
                     )
     
     # 生成图，num为生成数量，num_workers为并行进程数
-    draw(num = 30, num_workers = 5,)
+    draw(num = 100, num_workers = 5,)
     
