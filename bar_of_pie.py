@@ -66,10 +66,12 @@ class bardrawer(drawer):
         csv_file 格式:
         | legend_title                      | legend_list[0] | ...... | legend_list[data_group_num-1]            |
         | --------------------------------- | -------------- | ------ | ---------------------------------------- |
-        | xticklabel_list[0]                | data[0][0]     | ...... | data[0][data_group_num-1]                |
+        | xticklabel_list[0]                | data[0][0]     | ...... | data[data_group_num-1][0]                |
         | ......                            |   ......       |        |                                          |
         | xticklabel_list[xticklabel_num-1] |   ......       |        |                                          |
         第一列为pie的数据，第一行后面为bar的数据
+        bar_of_pie, pie_of_pie, bar_of_bar_vertical, bar_of_bar_horizontal, pie_of_bar都是用的这个数据格式
+        其中pie统一表示为大图，bar表示为小图
         """
         # 设置字体
         utils.set_font() 
@@ -79,96 +81,128 @@ class bardrawer(drawer):
         unit = random.choice(self.units)
 
         #region ======== 画图 ========
-        bar_vertical = random.choice([1,0])
-        barWidth = 0.2
+        bar_left = random.choice([1,0])
         # 设置是否用百分比显示数据
-        if datatype == "percentage" and random.random() < 0.5:
-            percentFormat = True
+        if random.random()<0.25:
+            is_percent_pie = True
+            is_percent_bar = True
+        elif random.random()<0.5:
+            is_percent_pie = False
+            is_percent_bar = True
+        elif random.random()<0.75:
+            is_percent_pie = True
+            is_percent_bar = False
         else:
-            percentFormat = False
+            is_percent_pie = False
+            is_percent_bar = False
 
-        weight = random.choice(self.weights)
-        stretch = random.choice(self.stretchs)
-        size = random.choice(self.sizes)
-        style = random.choice(self.styles)
-        variant = random.choice(self.variants)
+        percent = random.choice([random.uniform(100,10000),random.uniform(100,100000)])
+        if not is_percent_bar:
+            for i in range(1):
+                for j in range(1,len(legend_list)):
+                    data[j][i] = round(data[j][i]*percent, 1)
+                    csv_file.loc[i, csv_file.columns[j+1]] = data[j][i]
+        
+        if not is_percent_pie:
+            for i in range(len(xticklabel_list)):
+                for j in range(1):
+                    data[j][i] = round(data[j][i]*percent, 1)
+                    csv_file.loc[i, csv_file.columns[j+1]] = data[j][i]
+        
         color = random.choice(colors)
 
         # make figure and assign axis objects
         # fig_width = 5 + len(xticklabel_list) * 0.3 + len(data)*2
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(np.random.uniform(9, 16), np.random.uniform(4, 9)), dpi=random.choice(range(240, 360)))
+        if bar_left:
+            fig, (ax2, ax1) = plt.subplots(1, 2, figsize=(np.random.uniform(9, 16), np.random.uniform(4, 9)), dpi=random.choice(range(240, 360)))
+        else:
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(np.random.uniform(9, 16), np.random.uniform(4, 9)), dpi=random.choice(range(240, 360)))
         fig.subplots_adjust(wspace=0)
 
         # pie chart parameters
         overall_ratios = data[0]
+        overall_ratios_new = np.array(overall_ratios) / sum(overall_ratios)
         # labels = ['Approve', 'Disapprove', 'Undecided']
         # explode = [0.1, 0, 0]
         explode = [0] * len(overall_ratios)
         explode[0] = 0.1
         # rotate so that first wedge is split by the x-axis
-        angle = -180 * overall_ratios[0]
-        colors, colorNames = utils.get_diff_color(len(overall_ratios))
-        wedges, texts, autotexts = ax1.pie(overall_ratios, autopct='%1.1f%%', startangle=angle,
+        if bar_left:
+            angle = 180
+        else:
+            if is_percent_pie:
+                angle = -180 * overall_ratios[0]
+            else:
+                angle = -180 * overall_ratios_new[0]
+        # angle = 360 * overall_ratios[0]
+            
+        colors, colorNames = get_non_black_colors(len(overall_ratios))
+        if is_percent_pie:
+            wedges, texts, autotexts = ax1.pie(overall_ratios_new, autopct='%1.1f%%', startangle=angle,
                             labels=xticklabel_list, explode=explode, colors=colors)
-        
-        # # 设置标签属性
-        # for text in texts + autotexts:
-        #     text.set_fontsize(12)
-        #     text.set_bbox(dict(facecolor='white', alpha=0.8, edgecolor='none'))
-
-        # # 调整标签位置
-        # adjust_text(texts + autotexts, arrowprops=dict(arrowstyle="-", color='gray', lw=0.5))
-
-        # bar chart parameters
-        # age_ratios = [.33, .54, .07, .06]
-        # age_labels = ['Under 35', '35-49', '50-65', 'Over 65']
+        else:
+            wedges, texts, autotexts = ax1.pie(overall_ratios_new, autopct=lambda p: '{:.1f}'.format(p * sum(overall_ratios) / 100), startangle=angle,
+                            labels=xticklabel_list, explode=explode, colors=colors)
         age_ratios = []
         age_labels = legend_list[1:]
         for bar_i in range(len(age_labels)):
             age_ratios.append(data[bar_i+1][0])
         
+        age_ratios_new = np.array(age_ratios) / sum(age_ratios)
         bottom = 1
         # width = .2
         width = random.choice(range(1,3))
-
+        colors1, colorNames1 = get_non_black_colors(len(age_ratios))
         needLabel = random.random()
-
         # Adding from the top matches the legend.
-        for j, (height, label) in enumerate(reversed([*zip(age_ratios, age_labels)])):
-            bottom -= height
-            bc = ax2.bar(0, height, width, bottom=bottom, color=color, label=label,
-                        alpha=min(0.1 + 0.25 * j, 1.0))
-            ax2.bar_label(bc, labels=[f"{height:.1%}"], label_type='center')
-            # ax2.bar_label(bc, labels=[f"{label}"], label_type='edge')
-            
-            # 使用annotate函数添加文字标签
-            if needLabel > 0.3:
-                for rect in bc:
-                    height = rect.get_height()
-                    ax2.annotate(
-                        label,  # 标签文本
-                        xy=(rect.get_x() + rect.get_width(), rect.get_y() + height / 2),  # 标签的位置
-                        xytext=(5, 0),  # 偏移位置
-                        textcoords="offset points",  # 使用偏移位置
-                        ha='left', va='center',  # 水平对齐和垂直对齐
-                        fontsize=10, color='black'
-                    )
+        for j, (height_new, height, label) in enumerate(reversed([*zip(age_ratios_new, age_ratios, age_labels)])):
+            bottom -= height_new
+            # bc = ax2.bar(0, height_new, width, bottom=bottom, color=color, label=label,
+            #             alpha=min(0.1 + 0.25 * j, 1.0))
+            # 不同类型用颜色区分
+            bc = ax2.bar(0, height_new, width, bottom=bottom, color=colors1[j], label=label,
+                        alpha=1)
+            if is_percent_bar:
+                ax2.bar_label(bc, labels=[f"{height:.1%}"], label_type='center')
+            else:
+                ax2.bar_label(bc, labels=[f"{height:.1f}"], label_type='center')
+            for rect in bc:
+                height = rect.get_height()
+                ax2.annotate(
+                    label,  # 标签文本
+                    xy=(rect.get_x() + rect.get_width(), rect.get_y() + height / 2),  # 标签的位置
+                    xytext=(5, 0),  # 偏移位置
+                    textcoords="offset points",  # 使用偏移位置
+                    ha='left', va='center',  # 水平对齐和垂直对齐
+                    fontsize=10, color='black'
+                )
 
         ax2.set_title(xticklabel_list[0])
         if needLabel < 0.7:
             ax2.legend()
+        elif needLabel > 0.9:
+            ax1.legend(wedges, xticklabel_list, loc='center left', bbox_to_anchor=(1, 0), fontsize='medium')
         ax2.axis('off')
         ax2.set_xlim(- 2.5 * width, 2.5 * width)
 
         # use ConnectionPatch to draw lines between the two plots
         theta1, theta2 = wedges[0].theta1, wedges[0].theta2
         center, r = wedges[0].center, wedges[0].r
-        bar_height = sum(age_ratios)
+        # if is_percent_pie:
+        #     bar_height = sum(age_ratios)
+        # else:
+        bar_height = sum(age_ratios_new)
 
         # draw top connecting line
-        x = r * np.cos(np.pi / 180 * theta2) + center[0]
-        y = r * np.sin(np.pi / 180 * theta2) + center[1]
-        con = ConnectionPatch(xyA=(-width / 2, bar_height), coordsA=ax2.transData,
+        if bar_left:
+            x = r * np.cos(np.pi / 180 * theta1) + center[0]
+            y = r * np.sin(np.pi / 180 * theta1) + center[1]
+            con = ConnectionPatch(xyA=(width / 2, bar_height), coordsA=ax2.transData,
+                            xyB=(x, y), coordsB=ax1.transData)
+        else:
+            x = r * np.cos(np.pi / 180 * theta2) + center[0]
+            y = r * np.sin(np.pi / 180 * theta2) + center[1]
+            con = ConnectionPatch(xyA=(-width / 2, bar_height), coordsA=ax2.transData,
                             xyB=(x, y), coordsB=ax1.transData)
         con.set_color([0, 0, 0])
         linewidth = np.random.uniform(1, 5)
@@ -176,9 +210,15 @@ class bardrawer(drawer):
         ax2.add_artist(con)
 
         # draw bottom connecting line
-        x = r * np.cos(np.pi / 180 * theta1) + center[0]
-        y = r * np.sin(np.pi / 180 * theta1) + center[1]
-        con = ConnectionPatch(xyA=(-width / 2, 0), coordsA=ax2.transData,
+        if bar_left:
+            x = r * np.cos(np.pi / 180 * theta2) + center[0]
+            y = r * np.sin(np.pi / 180 * theta2) + center[1]
+            con = ConnectionPatch(xyA=(width / 2, 0), coordsA=ax2.transData,
+                            xyB=(x, y), coordsB=ax1.transData)
+        else:
+            x = r * np.cos(np.pi / 180 * theta1) + center[0]
+            y = r * np.sin(np.pi / 180 * theta1) + center[1]
+            con = ConnectionPatch(xyA=(-width / 2, 0), coordsA=ax2.transData,
                             xyB=(x, y), coordsB=ax1.transData)
         con.set_color([0, 0, 0])
         ax2.add_artist(con)
@@ -209,7 +249,7 @@ class bardrawer(drawer):
         #endregion ====== 画图 ======
 
         # 格式化最终输出，并保存  
-        opt_text_md = getmd_bar(colorNames, csv_file, xticklabel_list, legend_list)
+        opt_text_md = getmd_bar(colorNames, colorNames1, csv_file, xticklabel_list, legend_list[::-1], is_percent_pie, is_percent_bar)
         # opt_text_nonumber = getlongcaption_bar(colorNames, csv_file, percentFormat, bar_vertical)
 
         if self.usage == "md":
@@ -220,11 +260,16 @@ class bardrawer(drawer):
 
         # print(result)
 
-def getmd_bar(colorNames, csv_file, xticklabel_list, legend_list):
-    opt_text_md = f"这是一张扇形图和柱状图的组合，共有{len(colorNames)}组数据，"
-    csv_file = csv_file.map(modify_value)
+def getmd_bar(colorNames, colorNames1, csv_file, xticklabel_list, legend_list, is_percent_pie, is_percent_bar):
+    opt_text_md = f"这是一张扇形图和柱状图的组合，扇形图共有{len(colorNames)}组数据，"
+    # if is_percent:
+    #     csv_file = csv_file.map(modify_value)
     pie = csv_file.iloc[:, :2]
     bar = csv_file.loc[:0,:].iloc[:, 2:]
+    if is_percent_pie:
+        pie = pie.map(modify_value)
+    if is_percent_bar:
+        bar = bar.map(modify_value)
     bar = pd.melt(bar,var_name='类别',value_name='百分比').iloc[::-1]
     pie.columns = ['类别', '百分比']
     md_pie = pie.to_markdown(index=False)
@@ -235,6 +280,8 @@ def getmd_bar(colorNames, csv_file, xticklabel_list, legend_list):
         opt_text_md += f"其中{i[0]}代表{xticklabel_list[i[1]]}，"
     opt_text_md += f"该图对应的markdown格式如下：\n```markdown\n{md_pie}\n```"
     opt_text_md += f"\n\n柱状图表示的是扇形图{xticklabel_list[0]}区域的细分，"
+    for i in colorNames1:
+        opt_text_md += f"其中{i[0]}代表{legend_list[i[1]]}，"
     opt_text_md += f"该图对应的markdown格式如下：\n```markdown\n{md_bar}\n```"
     return opt_text_md
 
@@ -262,6 +309,8 @@ def generate_barofpie_1d_data(config_dict, chart_data, csv_file):
     | xticklabel_list[xticklabel_num-1] |   ......       |        |                                          |
     第一列为pie的数据，第一行后面为bar的数据
     data[0][0]应该为第一列最小值
+    bar_of_pie, pie_of_pie, bar_of_bar_vertical, bar_of_bar_horizontal, pie_of_bar都是用的这个数据格式
+    其中pie统一表示为大图，bar表示为小图
     """
     data_type = "percentage_sum1"
     chart_data["data_type"] = data_type
@@ -337,5 +386,5 @@ if __name__=="__main__":
                     )
     
     # 生成图，num为生成数量，num_workers为并行进程数
-    draw(num = 100, num_workers = 5,)
+    draw(num = 100000, num_workers = 112,)
     

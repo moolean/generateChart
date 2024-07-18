@@ -48,3 +48,6 @@
 - base_ring
 - bar_of_pie
 - pie_of_pie
+- bar_of_bar_vertical
+- bar_of_bar_horizontal
+- pie_of_bar
