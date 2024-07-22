@@ -3,7 +3,7 @@ import warnings
 from matplotlib import pyplot as plt
 import numpy as np
 from basedrawer import drawer, timer_decorator
-import generateChart.utils.utils as utils
+import utils.utils as utils
 import os
 import random
 import warnings
@@ -17,11 +17,83 @@ from utils.datagenerater import *
 import logging
 import matplotlib.image as mpimg
 from adjustText import adjust_text
+from labelformats.base_line_opt import getlongcaption_line
 
 # logging.basicConfig(
 #     level=logging.INFO,
 #     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s - [Process: %(process)d]"
 # )
+def generate_random_range(x_data_sign, num):
+
+    if x_data_sign == '+':
+        number_min = random.uniform(0, num/100)
+        number_max = random.uniform(num/100, num)
+    elif x_data_sign == '-':
+        number_min = random.uniform(-num, -num/100)
+        number_max = random.uniform(-num/100, 0)
+    elif x_data_sign == 'mixed':
+        number_min = random.uniform(-num, 0)
+        number_max = random.uniform(0, num)
+    else:
+        raise ValueError("Invalid range_type. Use '+', '-' or 'mixed'.")
+
+    return number_min, number_max
+    
+def generate_multigroup_1d_data(config_dict, chart_data, csv_file):
+    """
+    一维折线图，折线更加具有趋势而不是纯随机:
+    | legend_title                      | legend_list[0] | ...... | legend_list[data_group_num-1]            |
+    | --------------------------------- | -------------- | ------ | ---------------------------- ------------ |
+    | xticklabel_list[0]                | data[0][0]     | ...... | ......                                   |
+    | ......                            | ......         | ...... | ......                                   |
+    | xticklabel_list[xticklabel_num-1] | ......         | ...... | data[data_group_num-1][xticklabel_num-1] |
+    """
+    data_type = random.choice(["10000","100"]) 
+
+    chart_data["data_trends"] = []
+    chart_data["data_type"] = data_type
+    x_data_sign = config_dict['x_data_sign']
+
+    if data_type == "10000":
+        num_min, num_max = generate_random_range(x_data_sign, 10000)
+    elif data_type == "100":
+        num_min, num_max = generate_random_range(x_data_sign, 10000)
+    elif data_type == "percentage":
+        num_min = random.uniform(0, 0.2)
+        num_max = random.uniform(0.2, 1)
+        config_dict['decimal_places'] = 2
+        config_dict['x_data_sign'] = "+"
+    elif data_type == "percentage_sum1":
+        # 要求不同组在同一个x坐标点之和为0
+        num_min = 1
+        num_max = 10000
+        config_dict['decimal_places'] = 2
+        config_dict['x_data_sign'] = "+"
+
+    csv_file[chart_data['legend_title']] = chart_data['xticklabel_list']
+    # 为每个legend生成一组数据
+    for i in range(config_dict['data_group_num']):
+        # 制作趋势数据：              上升，下降，无趋势平坦，无趋势波动，先上升后下降，先下降后上升，周期性趋势
+        data_trend = random.choice(["up", "down", "random_flat", "random_fluctuate", "up2down", "down2up", ]) 
+        chart_data["data_trends"].append(data_trend)
+        chart_data["data"].append(generate_trend_numbers(data_trend,
+            config_dict['xticklabel_num'], config_dict['decimal_places'], x_data_sign,
+            range_min=num_min, range_max=num_max)
+        )
+        csv_file[chart_data["legend_list"][i]] = chart_data["data"][i]
+
+    if chart_data["data_type"] == "percentage_sum1":
+        # 修改数据为百分比格式，同一xticker数据之和为1，用2位小数表示
+        for i in range(len(chart_data["data"][0])):
+            total = 0
+            for j in range(len(chart_data["data"])):
+                total += chart_data["data"][j][i]
+            for j in range(len(chart_data["data"])):
+                chart_data["data"][j][i] = round(chart_data["data"][j][i]/total, 2)
+        for j in range(len(chart_data["data"])):
+            csv_file[chart_data["legend_list"][j]] = chart_data["data"][j]
+
+    csv_file.columns = [col_name if col_name != "" else '' for col_name in csv_file.columns]
 
 class bardrawer(drawer):
     def __init__(self,*args, **kwargs):
@@ -53,12 +125,11 @@ class bardrawer(drawer):
             input_dict['data_root'], input_dict['cnt']
         )
 
-        chart_title, legend_title, x_label, y_label, x_unit, y_unit, xticklabel_list, legend_list, data, datatype = (
+        chart_title, legend_title, x_label, y_label, x_unit, y_unit, xticklabel_list, legend_list, data, datatype, datatrends = (
             chart_data['chart_title'], chart_data['legend_title'], chart_data['x_label'], chart_data['y_label'],
             chart_data['x_unit'], chart_data['y_unit'], chart_data['xticklabel_list'],
-            chart_data['legend_list'], chart_data['data'], chart_data["data_type"]
+            chart_data['legend_list'], chart_data['data'], chart_data["data_type"], chart_data["data_trends"]
         )
-        
 
         utils.set_font()
 
@@ -91,11 +162,24 @@ class bardrawer(drawer):
         fig = plt.figure(figsize=(fig_width, np.random.uniform(4, 6)), dpi=random.choice(range(240, 360)))
         unit = random.choice(units)
         title_text = plt.title(chart_title)
-        if unit:
-            y_label += f"(单位：{unit})"
-        y_label_text = plt.ylabel(y_label)
+        # 随机隐藏y轴，设置y单位
+        y_visible = False
+        if random.random() < 0.1:
+            plt.yticks([])
+            y_visible = False
+        else:
+            y_visible = True
+            if unit:
+                y_label += f"(单位：{unit})"
+            y_label_text = plt.ylabel(y_label)
         y_list = []
-        
+        # 随机设置xticker倾斜度
+        try:
+            if len(xticklabel_list)>8 or random.random() < 0.1:
+                plt.xticks(rotation = random.choice([num for num in range(40, 70)]))
+        except:
+            print("xticker倾斜度设置失败")
+            return "error"
         height_range = max(max(group_data) for group_data in data) - min(min(group_data) for group_data in data)
         text_offset = height_range * 0.02  # 偏移量为权重范围的2%
         
@@ -113,37 +197,30 @@ class bardrawer(drawer):
 
             plt.plot(xticklabel_list, y_data, marker=marker, fillstyle=fillstyle, color=color, alpha=alpha, linestyle=linestyle, linewidth=linewidth, label=legend_list[i])
             color = random.choice(colors)
+            if self.usage == "md":
+                # ha = random.choice(hori_types)
+                # va = random.choice(vert_types)
+                weight = random.choice(weights)
+                stretch = random.choice(stretchs)
+                size = random.choice(sizes)
+                style = random.choice(styles)
+                variant = random.choice(variants)
+                
+                for i, value in enumerate(y_data):
+                    if not percentFormat:
+                        format = str(value)+unit
+                    else:
+                        format = '{:.0%}'.format(value)
+                    text = plt.text(
+                        xticklabel_list[i], value + text_offset, format,
+                        ha='center', va='bottom',
+                        color=color,
+                        weight=weight, stretch=stretch, size=size, style=style, variant=variant
+                    )
+                    text.set_path_effects([]) # 避免plt.xkcd()的影响
+                    y_list.append(text)
 
-            # ha = random.choice(hori_types)
-            # va = random.choice(vert_types)
-            weight = random.choice(weights)
-            stretch = random.choice(stretchs)
-            size = random.choice(sizes)
-            style = random.choice(styles)
-            variant = random.choice(variants)
 
-            for i, value in enumerate(y_data):
-                if not percentFormat:
-                    format = str(value)+unit
-                else:
-                    format = '{:.0%}'.format(value)
-                text = plt.text(
-                    xticklabel_list[i], value + text_offset, format,
-                    ha='center', va='bottom',
-                    color=color,
-                    weight=weight, stretch=stretch, size=size, style=style, variant=variant
-                )
-                text.set_path_effects([]) # 避免plt.xkcd()的影响
-                y_list.append(text)
-            # 随机设置xticker倾斜度
-            try:
-                if random.random() < 0.1 or len(xticklabel_list)>12:
-                    plt.xticks(rotation = random.choice([num for num in range(40, 70)]))
-            except:
-                print("11111")
-            # 随机隐藏y轴
-            if random.random() < 0.1:
-                plt.yticks([])
 
         locs = [1, 2, 3, 4]
         loc = random.choice(locs)
@@ -175,8 +252,7 @@ class bardrawer(drawer):
         with warnings.catch_warnings(record=True) as warning_list:
             plt.tight_layout()
             if warning_list:
-                for warning in warning_list:
-                    print(warning)
+                print("catch plt.tight_layout() error")
                 plt.close()
                 return "error"
         new_ax = plt.gcf().add_axes([0, 0, 1, 1])
@@ -187,16 +263,17 @@ class bardrawer(drawer):
         with warnings.catch_warnings(record=True) as warning_list:
             plt.draw()
             if warning_list:
-                for warning in warning_list:
-                    print(warning)
+                print("catch plt.draw() error")
                 plt.close()
                 return "error"
 
         #endregion ====== 画图 ======
 
         # 格式化最终输出，并保存  (每个种类的图格式不一，需要自行更改，**写在此处或新建文件不要更改原代码**)
-        result = getmd(colorNames, csv_file, percentFormat)
-        # opt_text_nonumber = getlongcaption_v2(colorNames, csv_file, percentFormat)
+        if self.usage == "md":
+            result = getmd(colorNames, csv_file, percentFormat)
+        elif self.usage == "nonumber":
+            result = getlongcaption_line(datatrends, colorNames, csv_file, percentFormat,y_visible=y_visible)
 
         self.savefiles(fig, cnt,"prompts/longcap_prompt.txt", csv_file, result)
 
@@ -206,7 +283,7 @@ class bardrawer(drawer):
 if __name__=="__main__":
 
     draw = bardrawer(chart_type = "base_line", # 一定要使用规定的type名称
-                    usage = "md", # 设置合成label的类别，md的输出为markdown格式
+                    usage = "nonumber", # 设置合成label的类别，md的输出为markdown格式
                     xticklabel_num_range = [5, 20], # 类别的随机范围，图合成时在5-20个类别中随机
                     data_group_num_range = [1, 5], # 图例的随机范围
                     x_data_sign_options = ["+"], # 

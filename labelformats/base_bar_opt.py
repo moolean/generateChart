@@ -323,9 +323,11 @@ def getlongcaption(colorNames, csv_file, percentFormat=None, bar_vertical=True, 
         csv_file = csv_file.iloc[::-1].reset_index(drop=True)
         opt_text_lc += f"- **X轴**：X轴代表数值尺度, 范围从{datarange[0]}到{datarange[1]}\n"
         opt_text_lc += "- **Y轴**：Y轴代表不同的变量或类别,从上到下依次是：" 
+        
         for value in csv_file.iloc[0:-1, 0]:
             opt_text_lc += value + " 、"
         opt_text_lc += csv_file.iloc[-1, 0] + " 。\n"
+
         opt_text_lc += "**颜色图例**：图表有一个图例，解释所用颜色与所代表的具体项：\n"
         for i in colorNames:
             opt_text_lc += f"- {i[0]}：{i[1]}\n"
@@ -356,17 +358,19 @@ def getlongcaption_v2(colorNames, csv_file, percentFormat=None, bar_vertical=Tru
     largeThresold = datarange[0] + (datarange[1] - datarange[0])*0.65
     smallThresold = datarange[0] + (datarange[1] - datarange[0])*0.35
     opt_text_lc += "\n\n### 分析与描述：\n\n"
-    xlist = [i for i in csv_file.iloc[0:-1, 0]]
+    
 
     # 图例分析
 
     if bar_vertical:
+        xlist = [i for i in csv_file.iloc[0:-1, 0]]
         opt_text_lc += f"- **Y轴**：Y轴代表数值尺度, 图中数据大体上范围从{datarange[0]}到{datarange[1]}\n"
         opt_text_lc += "- **X轴**：X轴代表不同的变量或类别,从左到右依次是：" 
         
         for value in xlist:
             opt_text_lc += value + " 、"
         opt_text_lc += csv_file.iloc[-1, 0] + " 。\n"
+
         opt_text_lc += f"**颜色图例**：图表有{len(colorNames)}个图例：\n"
         for idx, i in enumerate(colorNames):
             datalist = [i for i in csv_file.iloc[0:-1, idx+1]]
@@ -377,11 +381,14 @@ def getlongcaption_v2(colorNames, csv_file, percentFormat=None, bar_vertical=Tru
             opt_text_lc += f"{getLargeOrSmallText(xlist, datalist, largeThresold, smallThresold)}"
     else:
         csv_file = csv_file.iloc[::-1].reset_index(drop=True)
+        xlist = [i for i in csv_file.iloc[0:-1, 0]]
         opt_text_lc += f"- **X轴**：X轴代表数值尺度, 范围从{datarange[0]}到{datarange[1]}\n"
         opt_text_lc += "- **Y轴**：Y轴代表不同的变量或类别,从上到下依次是：" 
+
         for value in xlist:
             opt_text_lc += value + " 、"
         opt_text_lc += csv_file.iloc[-1, 0] + " 。\n"
+
         opt_text_lc += f"**颜色图例**：图表有{len(colorNames)}个图例：\n"
         for idx, i in enumerate(colorNames):
             datalist = [i for i in csv_file.iloc[0:-1, idx+1]]

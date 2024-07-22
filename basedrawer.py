@@ -74,10 +74,28 @@ class drawer(ABC):
         print("Available fonts:", available_fonts)
         # 设置环境变量，将自定义字体路径添加到MATPLOTLIBRC
         os.environ['MATPLOTLIBRC'] = font_path
+        # 使用字体列表
+        self.font_types =[
+            'Noto Sans CJK JP', 
+            "Noto Serif CJK JP",
+            "WenQuanYi Zen Hei",
+            "AR PL UMing CN",
+            "Long Cang",
+            
+            "Microsoft YaHei",
+            "STXingKai",
+            "STFangsong",
+            "STKaiti",
+            "STLiti",
+            "STZhongsong"
+        ]
 
-        # 忽略 UserWarning 警告（遇到生僻字字体没有会弹出字体警告）
-        warnings.filterwarnings("ignore", category=UserWarning)
+        # # 忽略 UserWarning 警告（遇到生僻字字体没有会弹出字体警告）
+        # warnings.filterwarnings("ignore", category=UserWarning)
         matplotlib.rcParams['axes.unicode_minus'] = False  # 正确显示负号
+        # 初始化使用的字库
+        dict_file = jieba.get_dict_file()
+        self.words = [line.decode("utf-8").split()[0] for line in dict_file.readlines()]
 
         self.chart_type = chart_type
         self.usage = usage
@@ -89,13 +107,13 @@ class drawer(ABC):
                         xticklabel_num_range = xticklabel_num_range, #改成tuple试试 TODO
                         data_group_num_range = data_group_num_range
                     )
+        # 初始化背景
         background_path = "background"
         self.background_imgs = []
         for file in os.listdir(background_path):
             fp = os.path.join(background_path, file)
-            
-        #     img = mpimg.imread(fp) Note: Init里面读图片并行会出问题，只能存放地址，不知道为什么
-        #     Image.open(fp)
+            # img = mpimg.imread(fp) Note: Init里面读图片并行会出问题，只能存放地址，不知道为什么
+            # Image.open(fp)
             self.background_imgs.append(fp)
 
         
@@ -132,6 +150,11 @@ class drawer(ABC):
             for file in filenames:
                 file_path = os.path.join(dirpath, file)
                 os.remove(file_path)
+    def set_font(self):
+        # 必须写在with plt.xkcd()的里面，不然会报错
+
+
+        matplotlib.rcParams['font.family'] = random.choice(self.font_types)
 
     # @timer_decorator
     def _generate_data_once(self, config_dict):
@@ -139,8 +162,7 @@ class drawer(ABC):
         Returns:
             _type_: 数据
         """
-        dict_file = jieba.get_dict_file()
-        words = [line.decode("utf-8").split()[0] for line in dict_file.readlines()]
+
 
         templete = {
             "chart_type":"",
@@ -158,17 +180,17 @@ class drawer(ABC):
         }
         chart_data = copy.deepcopy(templete)
         
-        chart_data["chart_title"] = random.choice(words) if random.random() < 0.7 else ""
-        chart_data['legend_title'] = random.choice(words) if random.random() < 0.5 else ""
-        chart_data["x_label"] = random.choice(words) if random.random() < 0.5 else ""
-        chart_data["y_label"] = random.choice(words) if random.random() < 0.5 else ""
-        chart_data["x_unit"] = random.choice(words) if random.random() < 0.5 else ""
-        chart_data["y_unit"] = random.choice(words) if random.random() < 0.5 else ""
+        chart_data["chart_title"] = random.choice(self.words) if random.random() < 0.7 else ""
+        chart_data['legend_title'] = random.choice(self.words) if random.random() < 0.5 else ""
+        chart_data["x_label"] = random.choice(self.words) if random.random() < 0.5 else ""
+        chart_data["y_label"] = random.choice(self.words) if random.random() < 0.5 else ""
+        chart_data["x_unit"] = random.choice(self.words) if random.random() < 0.5 else ""
+        chart_data["y_unit"] = random.choice(self.words) if random.random() < 0.5 else ""
 
         for _ in range(config_dict['xticklabel_num']):
-            chart_data['xticklabel_list'].append(random.choice(words))
+            chart_data['xticklabel_list'].append(random.choice(self.words))
         for _ in range(config_dict['data_group_num']): # 每一个legend都是一组数据
-            chart_data["legend_list"].append(random.choice(words)) # legend代表每个组的组名
+            chart_data["legend_list"].append(random.choice(self.words)) # legend代表每个组的组名
         
         csv_file = pd.DataFrame()
         csv_file2 = pd.DataFrame()
@@ -295,7 +317,7 @@ class drawer(ABC):
         new_size = (int(original_size[0] * scale_factor), int(original_size[1] * scale_factor))
         resized_img = img.resize(new_size, Image.Resampling.NEAREST)
 
-        prompt = random.choice(sensetool.getprompt(prompt_path))
+        prompt = random.choice(sensetool.gettxt_list(prompt_path))
 
         result = {
             "image": f"images/{self.chart_type}_{cnt}.jpg",

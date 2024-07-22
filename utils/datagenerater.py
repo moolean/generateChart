@@ -29,6 +29,72 @@ def generate_random_numbers(total_count, decimal_places, x_data_sign, range_min 
         return [round_number(num, decimal_places) for num in numbers] 
 
 
+def generate_trend_numbers(trend, total_count, decimal_places, x_data_sign, range_min=0, range_max=10000, max_ratio=100,):
+    data_type = random.choice(["percentage", "10000","100", "percentage_sum1"]) 
+    
+    # 上升，下降，无趋势平坦，无趋势波动，先上升后下降，先下降后上升，周期性趋势
+    assert trend in ["up", "down", "random_flat", "random_fluctuate", "up2down", "down2up", "periodic", "none"]
+
+    gap = range_max - range_min
+    maxslope = gap / total_count
+    noise_level = gap / 20
+    # 生成随机斜率或其他参数
+    slope = np.random.uniform(maxslope / 5, maxslope * 2)  # 随机上升斜率范围
+    slope2 = np.random.uniform(maxslope / 5, maxslope * 2)  # 随机下降斜率范围
+    amplitude = np.random.uniform(gap / 10, gap)  # 随机振幅范围（用于周期性趋势）
+    
+    if trend == "up":
+        base_num = np.random.uniform(range_min, range_max - gap/2)
+        numbers = base_num + slope * np.arange(total_count)
+    elif trend == "down":
+        base_num = np.random.uniform(range_min + gap / 2, range_max)
+        numbers = base_num - slope2 * np.arange(total_count)
+    elif trend == "random_flat":
+        base_num = np.random.uniform(range_min, range_max)
+        numbers = np.random.uniform(base_num - 0.1 * abs(base_num), base_num + 0.1 * abs(base_num), total_count)
+    elif trend == "random_fluctuate": 
+        base_num = np.random.uniform(range_min, range_max)
+        numbers = np.random.uniform(range_min, range_max, total_count)
+    elif trend == "up2down":
+        base_num = np.random.uniform(range_min, range_max - gap/2)
+        midpoint = total_count // 2
+        up_part = base_num + slope * np.arange(midpoint)
+        down_part = (base_num + slope * midpoint) - slope2 * np.arange(total_count - midpoint)
+        numbers = np.concatenate((up_part, down_part))
+    elif trend == "down2up":
+        base_num = np.random.uniform(range_min + gap/2, range_max)
+        midpoint = total_count // 2
+        down_part = base_num - slope2 * np.arange(midpoint)
+        up_part = (base_num - slope2 * midpoint) + slope * np.arange(total_count - midpoint)
+        numbers = np.concatenate((down_part, up_part))
+    # elif trend == "periodic":
+    #     base_num = np.random.uniform(range_min, range_max)
+    #     period = total_count // 5  # Example: 5 periods in total_count
+    #     numbers = base_num + amplitude * np.sin(np.linspace(0, 2 * np.pi * 5, total_count))
+    elif trend == "none":
+        numbers = [np.random.uniform(range_min, range_max)]
+        while len(numbers) < total_count:
+            next_num = np.random.uniform(range_min, range_max)
+            if all(abs(next_num) / max(abs(num), 1) <= max_ratio and abs(num) / max(abs(next_num), 1) <= max_ratio for num in numbers):
+                numbers.append(next_num)
+    # 加入噪声
+    noise = np.random.normal(0, noise_level, total_count)
+    numbers = numbers + noise * random.choice([1,-1])
+
+    if x_data_sign == "+":
+        range_min = min(numbers)
+        if range_min<0:
+            return [round_number(num+range_min+1, decimal_places) for num in numbers]
+        return [round_number(num, decimal_places) for num in numbers]
+    elif x_data_sign == "-":
+        range_max = max(numbers)
+        if range_max>0:
+            return [round_number(num-range_min-1, decimal_places) for num in numbers]
+        return [round_number(num, decimal_places) for num in numbers]
+    elif x_data_sign == "mixed":
+        return [round_number(num, decimal_places) for num in numbers]
+
+
 def generate_multigroup_1d_data(config_dict, chart_data, csv_file):
     """
     柱状图，一维折线图:
