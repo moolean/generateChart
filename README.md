@@ -1,3 +1,20 @@
+## 完成的图表
+
+|  表格  |  md  |long caption|
+| :----: | :----: | :----: |
+| base_bar  |  &#x2714;|  &#x2714;|
+| base_line  |  &#x2714;|  &#x2714;|
+| bar_line  |  &#x2714;|  &#x2716;|
+| combine_bar  |  &#x2714;|  &#x2716;|
+| stacked_bar  |  &#x2714;|  &#x2716;|
+| base_pie  |  &#x2714;|  &#x2716;|
+| base_ring  |  &#x2714;|  &#x2716;|
+| bar_of_pie  |  &#x2714;|  &#x2716;|
+| pie_of_pie  |  &#x2714;|  &#x2716;|
+| bar_of_bar_vertical  |  &#x2714;|  &#x2716;|
+| bar_of_bar_horizontal  |  &#x2714;|  &#x2716;|
+| pie_of_bar  |  &#x2714;|  &#x2716;|
+
 ## Init
         pip install git+https://github.com/moolean/workTools.git
 
@@ -37,17 +54,4 @@
 
 6. 验收通过后上传git，fork到自己库，改好后提交merge
 
-## 完成的图表
 
-- base_bar
-- base_line
-- bar_line
-- combine_bar
-- stacked_bar
-- base_pie
-- base_ring
-- bar_of_pie
-- pie_of_pie
-- bar_of_bar_vertical
-- bar_of_bar_horizontal
-- pie_of_bar
