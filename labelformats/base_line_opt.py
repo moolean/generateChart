@@ -352,7 +352,7 @@ def getlongcaption_line(data_trend, colorNames, csv_file, percentFormat=None, ba
         # 看得见y轴数字
         opt_text_lc += f"- **Y轴**：Y轴代表数值尺度, 范围大概从{datarange[0]}到{datarange[1]}\n"
     else:
-        opt_text_lc += f"- **Y轴**：Y轴代表数值尺度, 没有写具体范围"
+        opt_text_lc += f"- **Y轴**：Y轴代表数值尺度, 没有写具体范围\n"
     opt_text_lc += "- **X轴**：X轴代表不同的变量或类别,从左到右依次是：" 
     for value in xlist:
         opt_text_lc += value + " 、"
