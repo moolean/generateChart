@@ -231,6 +231,7 @@ class drawer(ABC):
             data_dict = self._generate_data_once(config_dict) # {chart_data, csv_file, background_imgs}
             input_dict.update(data_dict)
             # 画图脚本
+            
             if config_dict['mode'] == "xkcd":
                 with plt.xkcd():
                     draw_func_ret = self.chartdrawer(input_dict)
@@ -295,7 +296,7 @@ class drawer(ABC):
         
         self.checker.checkfiles(pathOverView)
 
-    def savefiles(self, fig, cnt, prompt_path, csv_file, result):
+    def savefiles(self, fig, cnt, prompt_path, csv_file, result, reject=None):
         """保存文件
 
         Args:
@@ -303,7 +304,8 @@ class drawer(ABC):
             cnt : 当前图表ID
             prompt_path : 使用prompt的文件路径
             csv_file : 数据
-            result : 模型输出
+            result : 模型输出 gt
+            reject : 负样本 gt，用于DPO训练，str｜None
         """
         # 随机缩放图像
         buf = io.BytesIO()
@@ -319,12 +321,13 @@ class drawer(ABC):
 
         prompt = random.choice(sensetool.gettxt_list(prompt_path))
 
-        result = {
+        save_json = {
             "image": f"images/{self.chart_type}_{cnt}.jpg",
             "height": new_size[1],
             "width": new_size[0],
-            "conversations":[{"from": "human", "value": f"<image>\n{prompt}"}, 
-                        {"from": "gpt", "value": f"{result}"}],
+            "conversations": [{"from": "human", "value": f"<image>\n{prompt}"}, 
+                            {"from": "gpt", "value": f"{result}"}],
+            "reject": reject,
             }
 
         image_save_path = os.path.join(self.data_root, f"images/{self.chart_type}_{cnt}.jpg")
@@ -334,7 +337,7 @@ class drawer(ABC):
         
         json_save_path = os.path.join(self.data_root, f"jsons/{self.chart_type}_{cnt}.json")
         with open(json_save_path, "w") as f:
-            json.dump(result, f, ensure_ascii=False)
+            json.dump(save_json, f, ensure_ascii=False)
 
         csv_save_path = os.path.join(self.data_root, f"csvs/{self.chart_type}_{cnt}.csv")
         csv_file.to_csv(csv_save_path, index=0)

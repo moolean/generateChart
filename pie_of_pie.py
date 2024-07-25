@@ -257,9 +257,9 @@ def getmd_bar(colorNames, colorNames1, csv_file, xticklabel_list, legend_list, i
     pie = csv_file.iloc[:, :2]
     bar = csv_file.loc[:0,:].iloc[:, 2:]
     if is_percent_pie:
-        pie = pie.map(modify_value)
+        pie = pie.applymap(modify_value)
     if is_percent_bar:
-        bar = bar.map(modify_value)
+        bar = bar.applymap(modify_value)
     # bar = pd.melt(bar,var_name='类别',value_name='百分比').iloc[::-1]
     bar = pd.melt(bar,var_name='类别',value_name='百分比')
     pie.columns = ['类别', '百分比']
@@ -375,5 +375,5 @@ if __name__=="__main__":
                     )
     
     # 生成图，num为生成数量，num_workers为并行进程数
-    draw(num = 100, num_workers = 5,)
+    draw(num = 100000, num_workers = 112,)
     

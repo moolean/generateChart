@@ -338,9 +338,9 @@ def getmd_bar(colorNames, colorNames1, csv_file, xticklabel_list, legend_list, l
     #     bar = bar.map(modify_value)
     #     pie = pie.map(modify_value)
     if is_percent_pie:
-        pie = pie.map(modify_value)
+        pie = pie.applymap(modify_value)
     if is_percent_bar:
-        bar = bar.map(modify_value)
+        bar = bar.applymap(modify_value)
     md_pie = pie.to_markdown(index=False)
     md_bar = bar.to_markdown(index=False)
     # md = csv_file.to_markdown(index=False)
@@ -449,5 +449,5 @@ if __name__=="__main__":
                     )
     
     # 生成图，num为生成数量，num_workers为并行进程数
-    draw(num = 100, num_workers = 5,)
+    draw(num = 100, num_workers = 10,)
     

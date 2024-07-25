@@ -2,3 +2,4 @@
 /view_*
 **/__pycache__/
 /background/
+/.conda/

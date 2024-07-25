@@ -218,14 +218,15 @@ class bardrawer(drawer):
         #endregion ====== 画图 ======
 
         # 格式化最终输出，并保存  (每个种类的图格式不一，需要自行更改，**写在此处或新建文件不要更改原代码**)
-        opt_text_md = getmd(colorNames, csv_file, percentFormat, bar_vertical)
-        opt_text_nonumber = getlongcaption_v2(colorNames, csv_file, percentFormat, bar_vertical)
 
+        reject = None
         if self.usage == "md":
-            result = opt_text_md
+            result = getmd(colorNames, csv_file, percentFormat, bar_vertical)
+            reject = getmd_reject(colorNames, csv_file, 0.2,percentFormat, bar_vertical)
         elif self.usage == "nonumber":
-            result = opt_text_nonumber
-        self.savefiles(fig, cnt,"prompts/longcap_prompt.txt", csv_file, result)
+            result = getlongcaption_v2(colorNames, csv_file, percentFormat, bar_vertical)
+
+        self.savefiles(fig, cnt,"prompts/longcap_prompt.txt", csv_file, result, reject=reject)
 
         # print(result)
         
@@ -233,7 +234,7 @@ class bardrawer(drawer):
 if __name__=="__main__":
 
     draw = bardrawer(chart_type = "base_bar", # 一定要使用规定的type名称
-                    usage = "nonumber", # 设置合成label的类别，md的输出为markdown格式
+                    usage = "md", # 设置合成label的类别，md的输出为markdown格式
                     xticklabel_num_range = [5, 20], # 类别的随机范围，图合成时在5-20个类别中随机
                     data_group_num_range = [1, 5], # 图例的随机范围
                     x_data_sign_options = ["+"], # 生成数据的正负，( + | - | mixed )
