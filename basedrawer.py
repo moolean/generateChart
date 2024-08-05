@@ -23,7 +23,7 @@ import matplotlib.image as mpimg
 from abc import ABC, abstractmethod
 import sensetool
 import functools
-
+from typing import Literal
 
 # logging.basicConfig(
 #     level=logging.INFO,
@@ -98,6 +98,7 @@ class drawer(ABC):
         self.words = [line.decode("utf-8").split()[0] for line in dict_file.readlines()]
 
         self.chart_type = chart_type
+        usage: Literal["md", "lp", "nonumber_lp","nonumber_md", "desc_qa", "reasoning_qa"]
         self.usage = usage
         self.data_root = os.path.join("opt", f"data_{self.chart_type}_{self.usage}")
         # # 生成图的config，每个图随机config
@@ -150,20 +151,17 @@ class drawer(ABC):
             for file in filenames:
                 file_path = os.path.join(dirpath, file)
                 os.remove(file_path)
+
     def set_font(self):
         # 必须写在with plt.xkcd()的里面，不然会报错
-
-
         matplotlib.rcParams['font.family'] = random.choice(self.font_types)
 
     # @timer_decorator
     def _generate_data_once(self, config_dict):
         """生成一个图的数据
         Returns:
-            _type_: 数据
+            dict: 数据
         """
-
-
         templete = {
             "chart_type":"",
             "chart_title": "",
@@ -209,7 +207,6 @@ class drawer(ABC):
     # @timer_decorator
     def _generateOneChart(self, cnt):
         """单次图表生成
-
         Args:
             cnt (_type_): _description_
 
@@ -327,6 +324,54 @@ class drawer(ABC):
             "width": new_size[0],
             "conversations": [{"from": "human", "value": f"<image>\n{prompt}"}, 
                             {"from": "gpt", "value": f"{result}"}],
+            "reject": reject,
+            }
+
+        image_save_path = os.path.join(self.data_root, f"images/{self.chart_type}_{cnt}.jpg")
+        resized_img.save(image_save_path)
+        buf.close()
+        plt.close()
+        
+        json_save_path = os.path.join(self.data_root, f"jsons/{self.chart_type}_{cnt}.json")
+        with open(json_save_path, "w") as f:
+            json.dump(save_json, f, ensure_ascii=False)
+
+        csv_save_path = os.path.join(self.data_root, f"csvs/{self.chart_type}_{cnt}.csv")
+        csv_file.to_csv(csv_save_path, index=0)
+
+    def savefiles_qa(self, fig, cnt, prompt_list, csv_file, result_list, reject=None):
+        """保存文件
+
+        Args:
+            fig : 图
+            cnt : 当前图表ID
+            prompt_path : 使用prompt的文件路径
+            csv_file : 数据
+            result : 模型输出 gt
+            reject : 负样本 gt，用于DPO训练，str｜None
+        """
+        # 随机缩放图像
+        buf = io.BytesIO()
+        fig.savefig(buf, format='jpg')
+        buf.seek(0)
+        img = Image.open(buf)
+        
+        # 选择一个随机的缩放因子
+        scale_factor = random.uniform(0.3, 1.2)
+        original_size = img.size  # (width, height)
+        new_size = (int(original_size[0] * scale_factor), int(original_size[1] * scale_factor))
+        resized_img = img.resize(new_size, Image.Resampling.NEAREST)
+
+        conversations = []
+        for i in range(len(prompt_list)):
+            conversations.append({"from": "human", "value": f"<image>\n{prompt_list[i]}"})
+            conversations.append({"from": "gpt", "value": f"{result_list[i]}"})
+
+        save_json = {
+            "image": f"images/{self.chart_type}_{cnt}.jpg",
+            "height": new_size[1],
+            "width": new_size[0],
+            "conversations": conversations,
             "reject": reject,
             }
 

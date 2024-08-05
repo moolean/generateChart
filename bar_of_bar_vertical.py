@@ -338,9 +338,9 @@ def getmd_bar(colorNames, colorNames1, csv_file, xticklabel_list, legend_list, l
     #     bar = bar.map(modify_value)
     #     pie = pie.map(modify_value)
     if is_percent_pie:
-        pie = pie.applymap(modify_value)
+        pie = pie.map(modify_value)
     if is_percent_bar:
-        bar = bar.applymap(modify_value)
+        bar = bar.map(modify_value)
     md_pie = pie.to_markdown(index=False)
     md_bar = bar.to_markdown(index=False)
     # md = csv_file.to_markdown(index=False)

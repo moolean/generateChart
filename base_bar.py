@@ -1,3 +1,4 @@
+import argparse
 import random
 import warnings
 from matplotlib import pyplot as plt
@@ -104,12 +105,12 @@ class bardrawer(drawer):
             if random.random() < 0.1 or len(xticklabel_list) > 8:
                 plt.xticks(rotation = random.choice([num for num in range(40, 70)]))
             # 随机隐藏y轴
-            if random.random() < 0.1 and usage != "nonumber":
+            if random.random() < 0.1 and "nonumber" not in usage:
                 plt.yticks([])
         else:
             plt.yticks(r1, xticklabel_list)
             # 随机隐藏x轴
-            if random.random() < 0.1 and usage != "nonumber":
+            if random.random() < 0.1 and "nonumber" not in usage:
                 plt.xticks([])
         
         for i, y_data in enumerate(data):
@@ -151,7 +152,7 @@ class bardrawer(drawer):
             variant = random.choice(self.variants)
             color = random.choice(colors)
     
-            if usage != "nonumber":
+            if "nonumber" not in usage:
                 for index, value in enumerate(y_data):
                     if not percentFormat:
                         format = str(value)+unit
@@ -187,6 +188,7 @@ class bardrawer(drawer):
                 ax.set_yscale('symlog')
             else:
                 ax.set_xscale('symlog')
+
         # 百分比数据设置对应刻度
         if percentFormat:
             if bar_vertical:
@@ -201,6 +203,7 @@ class bardrawer(drawer):
                     print(warning)
                 plt.close()
                 return "error"
+            
         # 设置背景图
         new_ax = plt.gcf().add_axes([0, 0, 1, 1])
         bg_img_path = random.choice(background_imgs)
@@ -216,30 +219,69 @@ class bardrawer(drawer):
                 plt.close()
                 return "error"
         #endregion ====== 画图 ======
-
-        # 格式化最终输出，并保存  (每个种类的图格式不一，需要自行更改，**写在此处或新建文件不要更改原代码**)
-
-        reject = None
-        if self.usage == "md":
-            result = getmd(colorNames, csv_file, percentFormat, bar_vertical)
-            reject = getmd_reject(colorNames, csv_file, 0.2,percentFormat, bar_vertical)
-        elif self.usage == "nonumber":
-            result = getlongcaption_v2(colorNames, csv_file, percentFormat, bar_vertical)
-
-        self.savefiles(fig, cnt,"prompts/longcap_prompt.txt", csv_file, result, reject=reject)
+        
+        """ 
+        格式化最终输出，并保存  (每个种类的图格式不一，需要自行更改，** 写在此处或在labelformats/新建文件 不要更改原代码 **)
+        每个图需要四种数据：
+        usage: Literal["md", "lp", "nonumber_lp","nonumber_md", "desc_qa", "reasoning_qa"]
+            有数字图：
+                1. 直接转markdown （模型默认行为）
+                2. longcaption描述 （目前不需要）
+                3. 描述性QA
+                4. 推理性QA （pending）
+            无数字图：
+                1. longcaption描述 （模型默认行为）
+                2. 估计其中数字转markdown
+                3. 描述性QA
+                4. 推理性QA（pending）
+        prompt 自行选择
+            默认使用无md的提问，
+            对应无数字强行估计md时使用带md的提问
+        """
+        
+        if "qa" in self.usage:
+            # 多轮qa 数据
+            prompt_list, result_list = get_qa(colorNames, csv_file, percentFormat, bar_vertical)
+            prompt = "prompts/markdown_prompt.txt"
+            reject = None # 为了dpo准备的负例，暂不需要
+            self.savefiles_qa(fig, cnt, prompt_list, csv_file, result_list, reject=reject)
+        
+        else:
+            prompt = "prompts/longcap_detail_prompt.txt"
+            reject = None
+            if self.usage == "md":
+                # 转md
+                result = getmd(colorNames, csv_file, percentFormat, bar_vertical)
+                # reject = getmd_reject(colorNames, csv_file, 0.2,percentFormat, bar_vertical)
+            elif self.usage == "nonumber_lp":
+                # 无数字longcaption
+                result = getlongcaption_v2(colorNames, csv_file, percentFormat, bar_vertical)
+            elif self.usage == "nonumber_md":
+                # 无数字转估计md
+                result = getmd_nonumber(colorNames, csv_file, percentFormat, bar_vertical)
+                prompt = "prompts/markdown_prompt.txt"
+    
+            self.savefiles(fig, cnt, prompt, csv_file, result, reject=reject)
 
         # print(result)
         
 
 if __name__=="__main__":
 
+    parser = argparse.ArgumentParser(description="This is a description of the program.")
+
+    parser.add_argument("--num", type=int, default=100, help="生成的数量，测试时默认生成100个看效果，大批量生成时直接写在代码中生成100k不需要管")
+    parser.add_argument("--workers", type=int, default=10, help="并行数，测试时默认10进程并行，大批量生成时m集群8卡有112个核使用112个进程跑，写在代码中不需要更改")
+
+    args = parser.parse_args()
+
     draw = bardrawer(chart_type = "base_bar", # 一定要使用规定的type名称
                     usage = "md", # 设置合成label的类别，md的输出为markdown格式
                     xticklabel_num_range = [5, 20], # 类别的随机范围，图合成时在5-20个类别中随机
                     data_group_num_range = [1, 5], # 图例的随机范围
-                    x_data_sign_options = ["+"], # 生成数据的正负，( + | - | mixed )
+                    x_data_sign_options = ["mixed"], # 生成数据的正负，( + | - | mixed )
                     )
     
     # 生成图，num为生成数量，num_workers为并行进程数
-    draw(num = 100000, num_workers = 112)
+    draw(num = args.num, num_workers = args.workers)
     

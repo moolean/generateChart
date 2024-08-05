@@ -320,7 +320,28 @@ def modify_value(x):
 def getmd(colorNames, csv_file, percentFormat=None, bar_vertical=True, reverse_colume=False, ):
     opt_text_md = f"这是一张折线图，共有{len(colorNames)}组数据，"
     if percentFormat:
-        csv_file = csv_file.applymap(modify_value)
+        csv_file = csv_file.map(modify_value)
+    # 保证输出表顺序和人顺序一样，由上到下由左到右
+    if not bar_vertical:
+        # 如果是纵排表，按行反转 DataFrame
+        csv_file = csv_file.iloc[::-1].reset_index(drop=True)
+    if reverse_colume:
+        csv_file = csv_file.iloc[:, 0:1].join(csv_file.iloc[:, -1:0:-1].reset_index(drop=True))
+    md = csv_file.to_markdown(index=False)
+
+    for i in colorNames:
+        opt_text_md += f"其中{i[0]}代表{i[1]}，"
+    opt_text_md += f"该图对应的markdown格式如下：\n```markdown\n{md}\n```"
+
+    return opt_text_md
+
+def getmd_nonumber(colorNames, csv_file, percentFormat=None, bar_vertical=True, reverse_colume=False, ):
+    opt_text_md = f"这是一张折线图，共有{len(colorNames)}组数据，"
+    # 无数字输出nonumber的md，每个值要估算，第一列是xticker不能改
+    csv_file.iloc[:, 1:] = csv_file.iloc[:, 1:].map(round_down_to_nearest)
+
+    if percentFormat:
+        csv_file = csv_file.map(modify_value)
     # 保证输出表顺序和人顺序一样，由上到下由左到右
     if not bar_vertical:
         # 如果是纵排表，按行反转 DataFrame

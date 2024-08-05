@@ -16,8 +16,12 @@
 | pie_of_bar  |  &#x2714;|  &#x2716;|
 
 ## Init
+        # 创建环境
+        conda env create --file environment.yml
+        source activate ~/.conda/envs/chart
+        # 安装工具包
         pip install git+https://github.com/moolean/workTools.git
-
+        # 解压图片
         unzip background.zip
 
 ## 如何开发新种类chart
@@ -55,3 +59,7 @@
 6. 验收通过后上传git，fork到自己库，改好后提交merge
 
 
+## 批量生成
+
+    在M集群提交任务生成100k数据，不用修改代码，如有报错联系我
+    bash mst/run.sh <chart_type>
